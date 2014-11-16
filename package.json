@@ -1,0 +1,31 @@
+{
+  "name": "level-librarian",
+  "version": "0.0.1",
+  "description": "Lightweight indexing for leveldb. Nothing fancy.",
+  "main": "index.js",
+  "directories": {
+    "test": "test"
+  },
+  "scripts": {
+    "test": "node ./test/main.js"
+  },
+  "keywords": [
+    "level",
+    "leveldb",
+    "indexes",
+    "index",
+    "indexing"
+  ],
+  "author": "jehan.tremback@gmail.com <you@example.com>",
+  "license": "MIT",
+  "devDependencies": {
+    "tape": "^3.0.3",
+    "level": "^0.18.0"
+  },
+  "dependencies": {
+    "safe-access": "^0.1.0",
+    "lodash": "^2.4.1",
+    "pull-stream": "^2.26.0",
+    "pull-level": "^1.2.0"
+  }
+}
