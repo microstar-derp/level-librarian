@@ -2,23 +2,24 @@
 
 var access = require('safe-access')
 var pull = require('pull-stream')
-var pullLevel = require('pull-level')
+var pl = require('pull-level')
 var _ = require('lodash')
 
-var _db;
-var _indexes;
+var db;
+var indexes;
 
 module.exports = function (d, i) {
-  _db = d
-  _indexes = i
+  db = d
+  indexes = i
 
-  return {
-    putIndex: putIndex,
-    read: read,
-    makeRange: makeRange,
-    makeIndexMsgs: makeIndexMsgs,
-    makeIndexMsg: makeIndexMsg
-  }
+  db.putWithIndex = putWithIndex
+  db.readFromIndex = readFromIndex
+  db.makeRange = makeRange
+  db.makeIndexDocs = makeIndexDocs
+  db.makeIndexDoc = makeIndexDoc
+  db.indexes = indexes
+
+  return db
 }
 
 
@@ -31,11 +32,73 @@ module.exports = function (d, i) {
 //   * `indexes`: this is an array of indexes to create, it will override
 //     the indexes set at initialization
 
-function putIndex (key, value, options, callback) {
-  var db = (options && options.db) || _db
-  var indexes = (options && options.indexes) || _indexes
+function putWithIndex (key, value, options, callback) {
+  var _indexes = (options && options.indexes) || indexes
 
-  db.batch(makeIndexMsgs({ key: key, value: value }, indexes), options, callback)
+  db.batch(makeIndexDocs({ key: key, value: value }, _indexes), options, callback)
+}
+
+
+// This function takes a doc and an array of indexes
+// and returns a batch of documents for createWriteStream
+//
+// var doc = {
+//   key: 'w32fwfw33',
+//   value: {
+//     timestamp: '29304857',
+//     content: { id: 's1df34sa3df', flip: 'flop' }
+//   }
+// }
+//
+// var indexes = [ 'timestamp', 'content.id', [ 'content.id', 'timestamp' ]]
+// ssailor.makeIndexDocs(doc, indexes)
+//
+// [
+//   // Original doc
+//   {
+//     key: 'w32fwfw33',
+//     value: {
+//       timestamp: '29304857',
+//       content: { id: 's1df34sa3df', flip: 'flop' }
+//     }
+//   },
+//
+//   // Index documents
+//   { key: '~timestamp~29304857~', value: 'w32fwfw33' },
+//   { key: '~content.id~s1df34sa3df~', value: 'w32fwfw33' },
+//   { key: '~content.id,timestamp~s1df34sa3df~29304857~' }
+// ]
+
+function makeIndexDocs (doc, indexes) {
+  var batch = [];
+
+  // Generate an index doc for each index
+  indexes.forEach(function (index) {
+    batch.push(makeIndexDoc(doc, index))
+  })
+
+  doc.value = JSON.stringify(doc.value)
+  doc.type = 'put'
+  batch.push(doc)
+
+  return batch
+}
+
+function makeIndexDoc (doc, index) {
+  // Make sure index is wrapped in array
+  if (!Array.isArray(index)) { index = [ index ] }
+
+  // Use access to turn the keystring into the
+  // appropriate value(s) from the doc
+  var val = index.map(function (index) {
+    return access(doc.value, index)
+  }).join('~')
+
+  return {
+      key: '~' + index.join(',') + '~' + val + '~',
+      value: doc.key,
+      type: 'put'
+    }
 }
 
 
@@ -51,12 +114,11 @@ function putIndex (key, value, options, callback) {
 // Note: the `gt`, `gte`, `lt`, and `lte` options will not work, as they are
 // generated automatically by level-librarian
 
-function read (index, query, options) {
-  var db = (options && options.db) || _db
+function readFromIndex (index, query, options) {
   options = _.extend(options || {}, makeRange(index, query))
 
   return pull(
-    pullLevel.read(db, options),
+    pl.read(db, options),
     pull.asyncMap(function (data, callback) {
       db.get(data.value, function (value) {
         callback(null, { key: data.value, value: value })
@@ -102,62 +164,4 @@ function makeRange (index, query) {
     gte: '~' + index.join(',') + '~' + gte.join('~') + '~',
     lte: '~' + index.join(',') + '~' + lte.join('~') + '~'
   }
-}
-
-
-// This function takes a message and an array of indexes
-// and returns a batch of documents for createWriteStream
-//
-// var message = {
-//   key: 'w32fwfw33',
-//   value: {
-//     timestamp: '29304857',
-//     content: { id: 's1df34sa3df', flip: 'flop' }
-//   }
-// }
-//
-// var indexes = [ 'timestamp', 'content.id', [ 'content.id', 'timestamp' ]]
-// ssailor.makeIndexMsgs(message, indexes)
-//
-// [
-//   // Original message
-//   {
-//     key: 'w32fwfw33',
-//     value: {
-//       timestamp: '29304857',
-//       content: { id: 's1df34sa3df', flip: 'flop' }
-//     }
-//   },
-//
-//   // Index documents
-//   { key: '~timestamp~29304857~', value: 'w32fwfw33' },
-//   { key: '~content.id~s1df34sa3df~', value: 'w32fwfw33' },
-//   { key: '~content.id,timestamp~s1df34sa3df~29304857~' }
-// ]
-
-function makeIndexMsgs (message, indexes) {
-  var batch = [ message ];
-
-  // Generate an index message for each index
-  indexes.forEach(function (index) {
-    batch.push(makeIndexMsg(message, index))
-  })
-
-  return batch
-}
-
-function makeIndexMsg (message, index) {
-  // Make sure index is wrapped in array
-  if (!Array.isArray(index)) { index = [ index ] }
-
-  // Use access to turn the keystring into the
-  // appropriate value(s) from the message
-  var val = index.map(function (index) {
-    return access(message.value, index)
-  }).join('~')
-
-  return {
-      key: '~' + index.join(',') + '~' + val + '~',
-      value: message.key
-    }
 }

@@ -20,7 +20,8 @@
   "license": "MIT",
   "devDependencies": {
     "tape": "^3.0.3",
-    "level": "^0.18.0"
+    "level": "^0.18.0",
+    "rimraf": "^2.2.8"
   },
   "dependencies": {
     "safe-access": "^0.1.0",
