@@ -179,3 +179,5 @@ test('.read (db, query[, options])', function (t) {
     })
   )
 })
+/*
+```
