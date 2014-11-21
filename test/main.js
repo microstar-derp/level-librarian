@@ -2,7 +2,7 @@
 ```javascript
 /**/
 
-// Why do these docs look wierd? They are also the tests. Don't worry about it.
+// Why do these docs look wierd? They are also the tests.
 
 'use strict';
 
@@ -11,64 +11,8 @@ var level = require('level')
 var llibrarian = require('../index.js')
 var pull = require('pull-stream')
 var pl = require('pull-level')
+var dump = require('level-dump')
 var rimraf = require('rimraf')
-
-/*
-```
-### Initialization
-Initialize level-librarian by passing it a leveldb and an array of properties
-that you would like to index on. You can also use keypaths, like `'content.id'`.
-To create secondary indexes, use an array.
-
-```javascript
-/**/
-
-var indexes = [
-  'timestamp', // Property name
-  'content.id', // Keypath
-  [ 'content.id', 'timestamp' ] // Secondary index
-]
-
-function dbSetup (indexes) {
-  rimraf.sync('./test.db')
-  var db = level('./test.db')
-  return db
-}
-
-/*
-```
-### .putWithIndex(key, value[, options][, callback])
-- `key`: same as levelup
-- `value`: same as levelup, except it will automatically stringify JSON for
-you
-- `options`: same as levelup, with the addition of 1 new option:
-  - `indexes`: this is an array of indexes to create, it will override the
-  indexes set at initialization
-
-```javascript
-/**/
-
-test('.putWithIndex(key, value[, options][, callback])', function (t) {
-  var value = {
-    timestamp: '29304857',
-    content: { name: 's1df34sa3df', flip: 'flop' }
-  }
-
-  var db = dbSetup(indexes);
-
-  db.putWithIndex('w32fwfw33', value, function (err) {
-    if (err) { throw err }
-    pull(
-      pl.read(db),
-      pull.collect(function (err, array) {
-        console.log(JSON.stringify(array,null,2))
-        t.equal()
-      })
-    )
-    t.end()
-  })
-})
-
 
 rimraf.sync('./test.db')
 var db = level('./test.db')
@@ -89,17 +33,31 @@ property of the document as a base. To create multi-level indexes, use an
 array.
 ```javascript
 /**/
-var indexes = {
-  // If you use a property that is not unique, only the latest document with
-  // that property will be indexed.
-  byScoreLatest: 'content.score', // Keypath
-
-  // If this is not what you want, add a unique index. '..key' allows you to
-  // index the key of the document.
-  byScore: ['content.score', '..key'], // Secondary index
-
-  byScoreByTime: ['content.score', 'timestamp', '..key'] // Tertiary index
+var example_document = {
+  key: 'w32fwfw33',
+  value: {
+    timestamp: '29304857',
+    content: { name: 'richard', score: 4 }
+  }
 }
+
+var indexes = [
+  // The values at these keypaths are concatenated to create the keys of
+  // index documents. By default, level-librarian will add the key of the main
+  // document to the end of the index key to ensure uniqueness.
+  'content.score',
+  // Key generated: '~content.score~4~w32fwfw33'
+
+  // You can pass an options object in the array. Right now, the only option
+  // is `latest` will only index the latest document with a given value at the keypath.
+  ['content.score', '$latest'],
+  // Key generated: '~content.score~4~'
+  // (Any subsequent documents with a content.score of 4 will overwrite this)
+
+  // You can create secondary indexes by supplying an array
+  ['content.score', 'timestamp']
+  // Key generated: '~content.score,timestamp~4~29304857~w32fwfw33'
+]
 
 var documents = [{
   key: 'w32fwfw33',
@@ -125,7 +83,12 @@ test('.write(db, indexes)', function (t) {
   pull(
     pull.values(documents),
     llibrarian.write(db, indexes, null, function () {
-      console.log('yea' + arguments)
+      console.log('yea' + JSON.stringify(arguments))
+      setTimeout(function () {
+        console.log('\n\n\n\n\n\n\n\n')
+        dump(db)
+      }, 2000)
+      t.end()
     })
   )
 })
@@ -148,36 +111,57 @@ index off, level-librarian will find documents with any value at that
 position.
 ```javascript
 /**/
-var queryA = {
-  k: indexes.byScoreByTime,
-  v: [['s1df34sa3df'], ['29304857', '29304923']]
-}
-
-var queryB = {
-  k: ['timestamp'],
-  v: [['29304857', '29304923']]
-}
-
-
-// k.length < v.length === false
-
-var queryC = {
-  k: ['timestamp', '..key'],
-  v: [['29304857', '29304923']]
-}
-
-var queryD = {
-  k: ['timestamp', '..key'],
-  v: ['29304857', '29304923']
-}
-
 test('.read (db, query[, options])', function (t) {
+
+  // This should retrieve all documents with a score of 4
+  var pullish = llibrarian.read(db, {
+      k: ['content.score'],
+      v: '4'
+    })
   pull(
-    llibrarian.read(db, queryA),
-    pull.collect(function (arr) {
-      console.log(arr)
+    pullish,
+    pull.collect(function (err, arr) {
+      console.log('A', arr)
     })
   )
+
+  // This should retrieve the latest documents with a score of 4 or 5
+  pull(
+    llibrarian.read(db, {
+      k: ['content.score', '$latest'],
+      v: [['4', '5']] // content.score value range
+    }),
+    pull.collect(function (err, arr) {
+      console.log('B', arr)
+    })
+  )
+
+  // This should retrieve all documents with a content.score of 4 with a
+  // timestamp between '29304857' and '29304923'
+  pull(
+    llibrarian.read(db, {
+      k: ['content.score', 'timestamp'],
+      v: ['4', ['29304857', '29304923']] // timestamp value range
+    }),
+    pull.collect(function (err, arr) {
+      console.log('C', arr)
+    })
+  )
+
+  // This should retrieve all documents with a score of 4 (just like the first
+  // example, since we left the timestamp off)
+  pull(
+    llibrarian.read(db, {
+      k: ['content.score', 'timestamp'],
+      v: '4', // Timestamp value left off
+    }),
+    pull.collect(function (arr) {
+      console.log('D', arr)
+    })
+  )
+
 })
+
 /*
 ```
+/**/

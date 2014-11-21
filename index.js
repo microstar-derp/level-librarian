@@ -4,6 +4,7 @@ var access = require('safe-access')
 var pull = require('pull-stream')
 var pl = require('pull-level')
 var _ = require('lodash')
+var dump = require('level-dump')
 
 module.exports = {
   read: read,
@@ -37,11 +38,15 @@ module.exports = {
 //     console.log(arr)
 //   })
 // )
+function esc (string) {
+  return string.replace('ÿ', '&&xff')
+}
+
 
 function read (db, query, options) {
   return pull(
     pl.read(db, makeRange(query, options)),
-    mapIndex()
+    mapIndex(db)
   )
 }
 
@@ -56,7 +61,8 @@ function write (db, indexes, opts, done) {
 
 function mapIndex (db) {
   return pull.asyncMap(function (data, callback) {
-    db.get(data.value, function (value) {
+    db.get(data.value, function (err, value) {
+      // console.log('INDEX', data.key)
       callback(null, { key: data.value, value: value })
     })
   })
@@ -92,16 +98,23 @@ function makeIndexDocs (doc, indexes) {
 function makeIndexDoc (doc, index) {
   if (!Array.isArray(index)) { index = [ index ] }
 
-  var val = index.map(function (index) {
-    if (index === '..key') { return doc.key }
-    return access(doc.value, index)
-  }).join('~')
+  var maybeKey = doc.key;
+
+  var val = []
+  // 'sds039ÿao'.replace('ÿ', '&&xff').replace('&&xff', 'ÿ')
+  index.forEach(function (keypath) {
+    if (keypath === '$latest') {
+      maybeKey = ''
+    } else {
+      val.push(esc(access(doc.value, keypath) + ''))
+    }
+  })
 
   return {
-      key: '~' + index.join(',') + '~' + val + '~',
-      value: doc.key,
-      type: 'put'
-    }
+    key: 'ÿ' + index.join(',') + 'ÿ' + val.join('ÿ') + 'ÿ' + maybeKey + 'ÿ',
+    value: doc.key,
+    type: 'put'
+  }
 }
 
 
@@ -115,14 +128,17 @@ function makeRange (query, options) {
   query.v.forEach(function (item) {
     if (!Array.isArray(item)) { item = [ item ] }
 
-    gte.push(item[0])
-    lte.push(item[1] || item[0])
+    gte.push(esc(item[0]))
+    lte.push(esc(item[1] || item[0]))
   })
 
   var range = {
-    gte: '~' + query.k.join(',') + '~' + gte.join('~') + '~',
-    lte: '~' + query.k.join(',') + '~' + lte.join('~') + '~'
+    gte: 'ÿ' + esc(query.k.join(',')) + 'ÿ' + gte.join('ÿ') + 'ÿ',
+    lte: 'ÿ' + esc(query.k.join(',')) + 'ÿ' + lte.join('ÿ') + 'ÿÿ'
   }
+
+  console.log('RANGE--- ', range)
 
   return _.extend(options || {}, range)
 }
+

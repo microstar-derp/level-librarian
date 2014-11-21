@@ -2,7 +2,7 @@
 ```javascript
 /**/
 
-// Why do these docs look wierd? They are also the tests. Don't worry about it.
+// Why do these docs look wierd? They are also the tests.
 
 'use strict';
 
@@ -12,63 +12,6 @@ var llibrarian = require('../index.js')
 var pull = require('pull-stream')
 var pl = require('pull-level')
 var rimraf = require('rimraf')
-
-/*
-```
-### Initialization
-Initialize level-librarian by passing it a leveldb and an array of properties
-that you would like to index on. You can also use keypaths, like `'content.id'`.
-To create secondary indexes, use an array.
-
-```javascript
-/**/
-
-var indexes = [
-  'timestamp', // Property name
-  'content.id', // Keypath
-  [ 'content.id', 'timestamp' ] // Secondary index
-]
-
-function dbSetup (indexes) {
-  rimraf.sync('./test.db')
-  var db = level('./test.db')
-  return db
-}
-
-/*
-```
-### .putWithIndex(key, value[, options][, callback])
-- `key`: same as levelup
-- `value`: same as levelup, except it will automatically stringify JSON for
-you
-- `options`: same as levelup, with the addition of 1 new option:
-  - `indexes`: this is an array of indexes to create, it will override the
-  indexes set at initialization
-
-```javascript
-/**/
-
-test('.putWithIndex(key, value[, options][, callback])', function (t) {
-  var value = {
-    timestamp: '29304857',
-    content: { name: 's1df34sa3df', flip: 'flop' }
-  }
-
-  var db = dbSetup(indexes);
-
-  db.putWithIndex('w32fwfw33', value, function (err) {
-    if (err) { throw err }
-    pull(
-      pl.read(db),
-      pull.collect(function (err, array) {
-        console.log(JSON.stringify(array,null,2))
-        t.equal()
-      })
-    )
-    t.end()
-  })
-})
-
 
 rimraf.sync('./test.db')
 var db = level('./test.db')
