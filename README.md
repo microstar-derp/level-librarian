@@ -16,18 +16,6 @@ var rimraf = require('rimraf')
 rimraf.sync('./test.db')
 var db = level('./test.db')
 
-// Just for debugging
-// setTimeout(function() {
-//   console.log('\n\n\n\n\n\n\n\n')
-//   pull(
-//     pl.read(db),
-//     pull.collect(function(err, arr) {
-//       console.log('ALLLLLL', arr)
-//     })
-//   )
-// }, 2000)
-
-
 /*
 ```
 ## .write(db, indexes[, opts, done])
@@ -106,7 +94,51 @@ test('.write(db, indexes)', function(t) {
     pull(
       pull.values(documents),
       llibrarian.write(db, indexes, null, function() {
+        pull(
+          pl.read(db),
+          pull.collect(function(err, arr) {
+            console.log('.write(db, indexes)', arr)
 
+            t.deepEqual(
+              [{
+                key: '39djdjj31',
+                value: '{"timestamp":"29304932","content":{"name":"mary","score":5}}'
+              }, {
+                key: 'dlnqoq003',
+                value: '{"timestamp":"29304990","content":{"name":"jeff","score":4}}'
+              }, {
+                key: 'w32fwfw33',
+                value: '{"timestamp":"29304857","content":{"name":"richard","score":4}}'
+              }, {
+                key: 'ÿcontent.score,$latestÿ4ÿÿ',
+                value: 'dlnqoq003'
+              }, {
+                key: 'ÿcontent.score,$latestÿ5ÿÿ',
+                value: '39djdjj31'
+              }, {
+                key: 'ÿcontent.score,timestampÿ4ÿ29304857ÿw32fwfw33ÿ',
+                value: 'w32fwfw33'
+              }, {
+                key: 'ÿcontent.score,timestampÿ4ÿ29304990ÿdlnqoq003ÿ',
+                value: 'dlnqoq003'
+              }, {
+                key: 'ÿcontent.score,timestampÿ5ÿ29304932ÿ39djdjj31ÿ',
+                value: '39djdjj31'
+              }, {
+                key: 'ÿcontent.scoreÿ4ÿdlnqoq003ÿ',
+                value: 'dlnqoq003'
+              }, {
+                key: 'ÿcontent.scoreÿ4ÿw32fwfw33ÿ',
+                value: 'w32fwfw33'
+              }, {
+                key: 'ÿcontent.scoreÿ5ÿ39djdjj31ÿ',
+                value: '39djdjj31'
+              }],
+              arr,
+              '.write(db, indexes)'
+            )
+          })
+        )
         t.end()
       })
     )
