@@ -97,11 +97,9 @@ function makeIndexDocs (doc, indexes) {
 
 function makeIndexDoc (doc, index) {
   if (!Array.isArray(index)) { index = [ index ] }
-
   var maybeKey = doc.key;
-
   var val = []
-  // 'sds039ÿao'.replace('ÿ', '&&xff').replace('&&xff', 'ÿ')
+
   index.forEach(function (keypath) {
     if (keypath === '$latest') {
       maybeKey = ''
