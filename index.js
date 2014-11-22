@@ -4,40 +4,18 @@ var access = require('safe-access')
 var pull = require('pull-stream')
 var pl = require('pull-level')
 var _ = require('lodash')
-var dump = require('level-dump')
 
 module.exports = {
   read: read,
   write: write,
-  mapIndex: mapIndex,
+  resolveIndexDocs: resolveIndexDocs,
   addIndexDocs: addIndexDocs,
   makeIndexDocs: makeIndexDocs,
   makeIndexDoc: makeIndexDoc,
   makeRange: makeRange
 }
 
-// var db = 'level stuff'
 
-// var indexes = [
-//   'timestamp', // Property name
-//   'content.id', // Keypath
-//   [ 'content.id', 'timestamp' ] // Secondary index
-// ]
-
-// pull(
-//   pull.values(),
-//   llibrarian.write(db, indexes)
-// )
-
-// pull(
-//   llibrarian.read(db, {
-//     k: ['content.id', 'timestamp'],
-//     v: ['jd03h38h3hi39', ['1234567890', '1234567899']]
-//   }),
-//   pull.collect(function (arr) {
-//     console.log(arr)
-//   })
-// )
 function esc (string) {
   return string.replace('ÿ', '&&xff')
 }
@@ -46,7 +24,7 @@ function esc (string) {
 function read (db, query, options) {
   return pull(
     pl.read(db, makeRange(query, options)),
-    mapIndex(db)
+    resolveIndexDocs(db)
   )
 }
 
@@ -59,10 +37,9 @@ function write (db, indexes, opts, done) {
 }
 
 
-function mapIndex (db) {
+function resolveIndexDocs (db) {
   return pull.asyncMap(function (data, callback) {
     db.get(data.value, function (err, value) {
-      // console.log('INDEX', data.key)
       callback(null, { key: data.value, value: value })
     })
   })
@@ -87,7 +64,6 @@ function makeIndexDocs (doc, indexes) {
     batch.push(makeIndexDoc(doc, indexes[key]))
   })
 
-  doc.value = JSON.stringify(doc.value)
   doc.type = 'put'
   batch.push(doc)
 
@@ -134,8 +110,6 @@ function makeRange (query, options) {
     gte: 'ÿ' + esc(query.k.join(',')) + 'ÿ' + gte.join('ÿ') + 'ÿ',
     lte: 'ÿ' + esc(query.k.join(',')) + 'ÿ' + lte.join('ÿ') + 'ÿÿ'
   }
-
-  console.log('RANGE--- ', range)
 
   return _.extend(options || {}, range)
 }

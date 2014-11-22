@@ -1,9 +1,13 @@
 /*
+
+# level-librarian
+level-librarian is a simple indexing tool for leveldb. You define indexes, and
+then query by them.
+
 ```javascript
 /**/
 
 // Why do these docs look wierd? They are also the tests.
-
 'use strict';
 
 var test = require('tape')
@@ -14,10 +18,11 @@ var pl = require('pull-level')
 var rimraf = require('rimraf')
 
 rimraf.sync('./test.db')
-var db = level('./test.db')
+var db = level('./test.db', { valueEncoding: 'json' })
 
 /*
 ```
+# High level
 ## .write(db, indexes[, opts, done])
 Returns a pull-stream sink that writes a stream of documents to the db, adding
 index documents as well.
@@ -61,88 +66,90 @@ var indexes = [
 
 ]
 
-var documents = [{
-  key: 'w32fwfw33',
-  value: {
-    timestamp: '29304857',
-    content: {
-      name: 'richard',
-      score: 4
-    }
-  }
-}, {
-  key: '39djdjj31',
-  value: {
-    timestamp: '29304932',
-    content: {
-      name: 'mary',
-      score: 5
-    }
-  }
-}, {
-  key: 'dlnqoq003',
-  value: {
-    timestamp: '29304990',
-    content: {
-      name: 'jeff',
-      score: 4
-    }
-  }
-}]
 
-test('.write(db, indexes)', function(t) {
+test('\n\n.write(db, indexes)', function(t) {
+  var docs = [{
+    key: 'w32fwfw33',
+    value: {
+      timestamp: '29304857',
+      content: {
+        name: 'richard',
+        score: 4
+      }
+    }
+  }, {
+    key: '39djdjj31',
+    value: {
+      timestamp: '29304932',
+      content: {
+        name: 'mary',
+        score: 5
+      }
+    }
+  }, {
+    key: 'dlnqoq003',
+    value: {
+      timestamp: '29304990',
+      content: {
+        name: 'jeff',
+        score: 4
+      }
+    }
+  }]
+
+  pull(
+    pull.values(docs),
+    llibrarian.write(db, indexes, null, function() {
+      checkDB()
+    })
+  )
+
+  function checkDB () {
     pull(
-      pull.values(documents),
-      llibrarian.write(db, indexes, null, function() {
-        pull(
-          pl.read(db),
-          pull.collect(function(err, arr) {
-            console.log('.write(db, indexes)', arr)
-
-            t.deepEqual(
-              [{
-                key: '39djdjj31',
-                value: '{"timestamp":"29304932","content":{"name":"mary","score":5}}'
-              }, {
-                key: 'dlnqoq003',
-                value: '{"timestamp":"29304990","content":{"name":"jeff","score":4}}'
-              }, {
-                key: 'w32fwfw33',
-                value: '{"timestamp":"29304857","content":{"name":"richard","score":4}}'
-              }, {
-                key: 'ÿcontent.score,$latestÿ4ÿÿ',
-                value: 'dlnqoq003'
-              }, {
-                key: 'ÿcontent.score,$latestÿ5ÿÿ',
-                value: '39djdjj31'
-              }, {
-                key: 'ÿcontent.score,timestampÿ4ÿ29304857ÿw32fwfw33ÿ',
-                value: 'w32fwfw33'
-              }, {
-                key: 'ÿcontent.score,timestampÿ4ÿ29304990ÿdlnqoq003ÿ',
-                value: 'dlnqoq003'
-              }, {
-                key: 'ÿcontent.score,timestampÿ5ÿ29304932ÿ39djdjj31ÿ',
-                value: '39djdjj31'
-              }, {
-                key: 'ÿcontent.scoreÿ4ÿdlnqoq003ÿ',
-                value: 'dlnqoq003'
-              }, {
-                key: 'ÿcontent.scoreÿ4ÿw32fwfw33ÿ',
-                value: 'w32fwfw33'
-              }, {
-                key: 'ÿcontent.scoreÿ5ÿ39djdjj31ÿ',
-                value: '39djdjj31'
-              }],
-              arr,
-              '.write(db, indexes)'
-            )
-          })
-        )
+      pl.read(db),
+      pull.collect(function(err, arr) {
+        console.log(JSON.stringify(arr))
+        t.deepEqual(arr, dbContents, '.write(db, indexes)')
         t.end()
       })
     )
-  })
+  }
+
+  var dbContents = [{
+    key: '39djdjj31',
+    value: {'timestamp':'29304932','content':{'name':'mary','score':5}}
+  }, {
+    key: 'dlnqoq003',
+    value: {'timestamp':'29304990','content':{'name':'jeff','score':4}}
+  }, {
+    key: 'w32fwfw33',
+    value: {'timestamp':'29304857','content':{'name':'richard','score':4}}
+  }, {
+    key: 'ÿcontent.score,$latestÿ4ÿÿ',
+    value: 'dlnqoq003'
+  }, {
+    key: 'ÿcontent.score,$latestÿ5ÿÿ',
+    value: '39djdjj31'
+  }, {
+    key: 'ÿcontent.score,timestampÿ4ÿ29304857ÿw32fwfw33ÿ',
+    value: 'w32fwfw33'
+  }, {
+    key: 'ÿcontent.score,timestampÿ4ÿ29304990ÿdlnqoq003ÿ',
+    value: 'dlnqoq003'
+  }, {
+    key: 'ÿcontent.score,timestampÿ5ÿ29304932ÿ39djdjj31ÿ',
+    value: '39djdjj31'
+  }, {
+    key: 'ÿcontent.scoreÿ4ÿdlnqoq003ÿ',
+    value: 'dlnqoq003'
+  }, {
+    key: 'ÿcontent.scoreÿ4ÿw32fwfw33ÿ',
+    value: 'w32fwfw33'
+  }, {
+    key: 'ÿcontent.scoreÿ5ÿ39djdjj31ÿ',
+    value: '39djdjj31'
+  }]
+})
 /*
 ```
 ## .read (db, query[, options])
@@ -162,85 +169,233 @@ index off, level-librarian will find documents with any value at that
 position.
 ```javascript
 /**/
-test('.read (db, query[, options])', function(t) {
+test('\n\n.read(db, query[, options])', function(t) {
   t.plan(4)
 
-  // This should retrieve all documents with a score of 4
-  pull(
-    llibrarian.read(db, {
-      k: ['content.score'],
-      v: '4'
-    }),
-    pull.collect(function(err, arr) {
-      console.log('A', arr)
 
-      t.deepEqual([{
-        key: 'dlnqoq003',
-        value: '{"timestamp":"29304990","content":{"name":"jeff","score":4}}'
-      }, {
-        key: 'w32fwfw33',
-        value: '{"timestamp":"29304857","content":{"name":"richard","score":4}}'
-      }], arr, 'docs read A')
+  // This should retrieve all documents with a score of 4
+  var queryA = {
+    k: ['content.score'],
+    v: '4'
+  }
+
+  pull(
+    llibrarian.read(db, queryA),
+    pull.collect(function(err, arr) {
+      console.log('A', JSON.stringify(arr))
+
+      t.deepEqual(arr, resultA, 'docs read A')
     })
   )
+
+  var resultA = [{
+    key: 'dlnqoq003',
+    value: {'timestamp':'29304990','content':{'name':'jeff','score':4}}
+  }, {
+    key: 'w32fwfw33',
+    value: {'timestamp':'29304857','content':{'name':'richard','score':4}}
+  }]
+
 
   // This should retrieve the latest documents with a score of 4 or 5
-  pull(
-    llibrarian.read(db, {
-      k: ['content.score', '$latest'],
-      v: [['4', '5']] // content.score value range
-    }),
-    pull.collect(function(err, arr) {
-      console.log('B', arr)
+  var queryB = {
+    k: ['content.score', '$latest'],
+    v: [['4', '5']] // content.score value range
+  }
 
-      t.deepEqual([{
-        key: 'dlnqoq003',
-        value: '{"timestamp":"29304990","content":{"name":"jeff","score":4}}'
-      }, {
-        key: '39djdjj31',
-        value: '{"timestamp":"29304932","content":{"name":"mary","score":5}}'
-      }], arr, 'docs read B')
+  pull(
+    llibrarian.read(db, queryB),
+    pull.collect(function(err, arr) {
+      console.log('B', JSON.stringify(arr))
+      t.deepEqual(arr, resultB, 'docs read B')
     })
   )
+
+  var resultB = [{
+    key: 'dlnqoq003',
+    value: {'timestamp':'29304990','content':{'name':'jeff','score':4}}
+  }, {
+    key: '39djdjj31',
+    value: {'timestamp':'29304932','content':{'name':'mary','score':5}}
+  }]
+
 
   // This should retrieve all documents with a content.score of 4 with a
   // timestamp between '29304857' and '29304923'
-  pull(
-    llibrarian.read(db, {
-      k: ['content.score', 'timestamp'],
-      v: ['4', ['29304857', '29304923']] // timestamp value range
-    }),
-    pull.collect(function(err, arr) {
-      console.log('C', arr)
+  var queryC = {
+    k: ['content.score', 'timestamp'],
+    v: ['4', ['29304857', '29304923']] // timestamp value range
+  }
 
-      t.deepEqual([{
-        key: 'w32fwfw33',
-        value: '{"timestamp":"29304857","content":{"name":"richard","score":4}}'
-      }], arr, 'docs read C')
+  pull(
+    llibrarian.read(db, queryC),
+    pull.collect(function(err, arr) {
+      console.log('C', JSON.stringify(arr))
+      t.deepEqual(arr, resultC, 'C')
     })
   )
+
+  var resultC = [{
+    key: 'w32fwfw33',
+    value: {'timestamp':'29304857','content':{'name':'richard','score':4}}
+  }]
+
 
   // This should retrieve all documents with a score of 4 (just like the first
   // example, since we left the timestamp off)
-  pull(
-    llibrarian.read(db, {
-      k: ['content.score', 'timestamp'],
-      v: '4', // Timestamp value left off
-    }),
-    pull.collect(function(err, arr) {
-      console.log('D', arr)
+  var queryD = {
+    k: ['content.score', 'timestamp'],
+    v: '4', // Timestamp value left off
+  }
 
-      t.deepEqual([{
-        key: 'w32fwfw33',
-        value: '{"timestamp":"29304857","content":{"name":"richard","score":4}}'
-      }, {
-        key: 'dlnqoq003',
-        value: '{"timestamp":"29304990","content":{"name":"jeff","score":4}}'
-      }], arr, 'docs read D')
+  pull(
+    llibrarian.read(db, queryD),
+    pull.collect(function(err, arr) {
+      console.log('D', JSON.stringify(arr))
+      t.deepEqual(arr, resultD, 'D')
     })
   )
 
+  var resultD = [{
+    key: 'w32fwfw33',
+    value: {'timestamp':'29304857','content':{'name':'richard','score':4}}
+  }, {
+    key: 'dlnqoq003',
+    value: {'timestamp':'29304990','content':{'name':'jeff','score':4}}
+  }]
 })
+
+/*
+```
+# Through streams
+level-librarian provides through streams, which are also used internally in
+`read` and `write`.
+
+## .addIndexDocs(indexes)
+Add index documents to a stream of primary documents.
+```javascript
+/**/
+test('\n\n.addIndexDocs(indexes)', function (t) {
+  var doc = {
+    key: 'w32fwfw33',
+    value: {
+      timestamp: '29304857',
+      content: {
+        name: 'richard',
+        score: 4
+      }
+    }
+  }
+
+  pull(
+    pull.values([doc]),
+    llibrarian.addIndexDocs(indexes),
+    pull.collect(function(err, arr) {
+      console.log(JSON.stringify(arr))
+      t.deepEqual(arr, result)
+      t.end()
+    })
+  )
+
+  var result = [{
+    'key': 'w32fwfw33',
+    'value': {
+      'timestamp': '29304857',
+      'content': {
+        'name': 'richard',
+        'score': 4
+      }
+    },
+    'type': 'put'
+  },
+  {
+    'key': 'ÿcontent.scoreÿ4ÿw32fwfw33ÿ',
+    'value': 'w32fwfw33',
+    'type': 'put'
+  }, {
+    'key': 'ÿcontent.score,timestampÿ4ÿ29304857ÿw32fwfw33ÿ',
+    'value': 'w32fwfw33',
+    'type': 'put'
+  }, {
+    'key': 'ÿcontent.score,$latestÿ4ÿÿ',
+    'value': 'w32fwfw33',
+    'type': 'put'
+  }]
+})
+/*
+```
+## .resolveIndexDocs(db)
+Resolve index documents to primary documents.
+```javascript
+/**/
+test('\n\n.resolveIndexDocs(db)', function (t) {
+  var docs = [{
+    key: 'ÿcontent.scoreÿ4ÿdlnqoq003ÿ',
+    value: 'dlnqoq003'
+  }, {
+    key: 'ÿcontent.scoreÿ4ÿw32fwfw33ÿ',
+    value: 'w32fwfw33'
+  }, {
+    key: 'ÿcontent.scoreÿ5ÿ39djdjj31ÿ',
+    value: '39djdjj31'
+  }]
+
+  pull(
+    pull.values(docs),
+    llibrarian.addIndexDocs(indexes),
+    pull.collect(function(err, arr) {
+      console.log(JSON.stringify(arr))
+      t.deepEqual(arr, results)
+      t.end()
+    })
+  )
+
+  var results = [{
+    key: 'w32fwfw33',
+    value: {
+      timestamp: '29304857',
+      content: {
+        name: 'richard',
+        score: 4
+      }
+    }
+  }, {
+    key: '39djdjj31',
+    value: {
+      timestamp: '29304932',
+      content: {
+        name: 'mary',
+        score: 5
+      }
+    }
+  }, {
+    key: 'dlnqoq003',
+    value: {
+      timestamp: '29304990',
+      content: {
+        name: 'jeff',
+        score: 4
+      }
+    }
+  }]
+})
+/*
+```
+# Pure functions
+These are used in `.resolveindexDocs()` and `.addIndexDocs()`.
+
+## .makeIndexDocs(doc, indexes)
+TODO
+
+## .makeIndexDoc(doc, index)
+TODO
+
+## .makeRange(query, options)
+TODO
+
+```javascript
+/**/
+
 
 /*
 ```
