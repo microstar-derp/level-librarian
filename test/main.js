@@ -99,7 +99,7 @@ test('\n\n.write(db, indexes)', function(t) {
 
   pull(
     pull.values(docs),
-    llibrarian.write(db, indexes, null, function() {
+    llibrarian.write(db, indexes, null, function() { // <-- Here's how you do it
       checkDB()
     })
   )
@@ -172,16 +172,6 @@ position.
 test('\n\n.read(db, query[, options])', function(t) {
   t.plan(6)
 
-  function check (query, result, string) {
-    pull(
-      llibrarian.read(db, query),
-      pull.collect(function(err, arr) {
-        console.log(string, JSON.stringify(arr))
-        t.deepEqual(arr, result, string)
-      })
-    )
-  }
-
   // This should retrieve all documents with a score of 4
   var queryA = {
     k: ['content.score'],
@@ -196,8 +186,24 @@ test('\n\n.read(db, query[, options])', function(t) {
     value: {'timestamp':'29304857','content':{'name':'richard','score':4}}
   }]
 
-  check(queryA, resultA, 'A')
+  pull(
+    llibrarian.read(db, query), // <-- Here's how you do it
+    pull.collect(function(err, arr) {
+      console.log(string, JSON.stringify(arr))
+      t.deepEqual(arr, result, string)
+    })
+  )
 
+  // Reduce reptition of test code
+  function check (query, result, string) {
+    pull(
+      llibrarian.read(db, query),
+      pull.collect(function(err, arr) {
+        console.log(string, JSON.stringify(arr))
+        t.deepEqual(arr, result, string)
+      })
+    )
+  }
 
   // This should retrieve the latest documents with a score of 4 or 5
   var queryB = {
@@ -330,7 +336,7 @@ test('\n\n.addIndexDocs(indexes)', function (t) {
 
   pull(
     pull.values([doc]),
-    llibrarian.addIndexDocs(indexes),
+    llibrarian.addIndexDocs(indexes), // <-- Here's how you do it
     pull.collect(function(err, arr) {
       console.log(JSON.stringify(arr))
       t.deepEqual(arr, expected)
@@ -388,7 +394,7 @@ test('\n\n.resolveIndexDocs(db)', function (t) {
 
   pull(
     pull.values(docs),
-    llibrarian.resolveIndexDocs(db),
+    llibrarian.resolveIndexDocs(db), // <-- Here's how you do it
     pull.collect(function(err, arr) {
       console.log(JSON.stringify(arr))
       t.deepEqual(arr, expected)

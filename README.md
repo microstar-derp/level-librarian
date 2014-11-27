@@ -99,7 +99,7 @@ test('\n\n.write(db, indexes)', function(t) {
 
   pull(
     pull.values(docs),
-    llibrarian.write(db, indexes, null, function() {
+    llibrarian.write(db, indexes, null, function() { // <-- Here's how you do it
       checkDB()
     })
   )
@@ -170,23 +170,13 @@ position.
 ```javascript
 /**/
 test('\n\n.read(db, query[, options])', function(t) {
-  t.plan(4)
-
+  t.plan(6)
 
   // This should retrieve all documents with a score of 4
   var queryA = {
     k: ['content.score'],
     v: '4'
   }
-
-  pull(
-    llibrarian.read(db, queryA),
-    pull.collect(function(err, arr) {
-      console.log('A', JSON.stringify(arr))
-
-      t.deepEqual(arr, resultA, 'docs read A')
-    })
-  )
 
   var resultA = [{
     key: 'dlnqoq003',
@@ -196,20 +186,30 @@ test('\n\n.read(db, query[, options])', function(t) {
     value: {'timestamp':'29304857','content':{'name':'richard','score':4}}
   }]
 
+  pull(
+    llibrarian.read(db, query), // <-- Here's how you do it
+    pull.collect(function(err, arr) {
+      console.log(string, JSON.stringify(arr))
+      t.deepEqual(arr, result, string)
+    })
+  )
+
+  // Reduce reptition of test code
+  function check (query, result, string) {
+    pull(
+      llibrarian.read(db, query),
+      pull.collect(function(err, arr) {
+        console.log(string, JSON.stringify(arr))
+        t.deepEqual(arr, result, string)
+      })
+    )
+  }
 
   // This should retrieve the latest documents with a score of 4 or 5
   var queryB = {
     k: ['content.score', '$latest'],
     v: [['4', '5']] // content.score value range
   }
-
-  pull(
-    llibrarian.read(db, queryB),
-    pull.collect(function(err, arr) {
-      console.log('B', JSON.stringify(arr))
-      t.deepEqual(arr, resultB, 'docs read B')
-    })
-  )
 
   var resultB = [{
     key: 'dlnqoq003',
@@ -219,6 +219,7 @@ test('\n\n.read(db, query[, options])', function(t) {
     value: {'timestamp':'29304932','content':{'name':'mary','score':5}}
   }]
 
+  check(queryB, resultB, 'B')
 
   // This should retrieve all documents with a content.score of 4 with a
   // timestamp between '29304857' and '29304923'
@@ -227,18 +228,12 @@ test('\n\n.read(db, query[, options])', function(t) {
     v: ['4', ['29304857', '29304923']] // timestamp value range
   }
 
-  pull(
-    llibrarian.read(db, queryC),
-    pull.collect(function(err, arr) {
-      console.log('C', JSON.stringify(arr))
-      t.deepEqual(arr, resultC, 'C')
-    })
-  )
-
   var resultC = [{
     key: 'w32fwfw33',
     value: {'timestamp':'29304857','content':{'name':'richard','score':4}}
   }]
+
+  check(queryC, resultC, 'C')
 
 
   // This should retrieve all documents with a score of 4 (just like the first
@@ -248,14 +243,6 @@ test('\n\n.read(db, query[, options])', function(t) {
     v: '4', // Timestamp value left off
   }
 
-  pull(
-    llibrarian.read(db, queryD),
-    pull.collect(function(err, arr) {
-      console.log('D', JSON.stringify(arr))
-      t.deepEqual(arr, resultD, 'D')
-    })
-  )
-
   var resultD = [{
     key: 'w32fwfw33',
     value: {'timestamp':'29304857','content':{'name':'richard','score':4}}
@@ -263,6 +250,38 @@ test('\n\n.read(db, query[, options])', function(t) {
     key: 'dlnqoq003',
     value: {'timestamp':'29304990','content':{'name':'jeff','score':4}}
   }]
+
+  check(queryD, resultD, 'D')
+
+
+  // This should retrieve all documents with a score of 4 and a timestamp >
+  // 29304950
+  var queryE = {
+    k: ['content.score', 'timestamp'],
+    v: ['4', ['29304950', null]]
+  }
+
+  var resultE = [{
+    key: 'dlnqoq003',
+    value: {'timestamp':'29304990','content':{'name':'jeff','score':4}}
+  }]
+
+  check(queryE, resultE, 'E')
+
+
+  // This should retrieve all documents with a score of 4 and a timestamp <
+  // 29304950
+  var queryF = {
+    k: ['content.score', 'timestamp'],
+    v: ['4', [null, '29304950']]
+  }
+
+  var resultF = [{
+    key: 'w32fwfw33',
+    value: {'timestamp':'29304857','content':{'name':'richard','score':4}}
+  }]
+
+  check(queryF, resultF, 'F')
 })
 
 /*
@@ -317,7 +336,7 @@ test('\n\n.addIndexDocs(indexes)', function (t) {
 
   pull(
     pull.values([doc]),
-    llibrarian.addIndexDocs(indexes),
+    llibrarian.addIndexDocs(indexes), // <-- Here's how you do it
     pull.collect(function(err, arr) {
       console.log(JSON.stringify(arr))
       t.deepEqual(arr, expected)
@@ -375,7 +394,7 @@ test('\n\n.resolveIndexDocs(db)', function (t) {
 
   pull(
     pull.values(docs),
-    llibrarian.resolveIndexDocs(db),
+    llibrarian.resolveIndexDocs(db), // <-- Here's how you do it
     pull.collect(function(err, arr) {
       console.log(JSON.stringify(arr))
       t.deepEqual(arr, expected)
