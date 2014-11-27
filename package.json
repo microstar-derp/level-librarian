@@ -14,9 +14,11 @@
     "leveldb",
     "indexes",
     "index",
-    "indexing"
+    "indexing",
+    "query",
+    "queries"
   ],
-  "author": "jehan.tremback@gmail.com <you@example.com>",
+  "author": "jehan.tremback@gmail.com",
   "license": "MIT",
   "devDependencies": {
     "tape": "^3.0.3",
@@ -27,6 +29,7 @@
     "safe-access": "^0.1.0",
     "lodash": "^2.4.1",
     "pull-stream": "^2.26.0",
-    "pull-level": "^1.2.0"
+    "pull-level": "^1.2.0",
+    "ramda": "^0.8.0"
   }
 }

@@ -3,7 +3,6 @@
 var access = require('safe-access')
 var pull = require('pull-stream')
 var pl = require('pull-level')
-var _ = require('lodash')
 var r = require('ramda')
 
 module.exports = {
@@ -18,7 +17,8 @@ module.exports = {
 
 
 function esc (string) {
-  return string.replace('ÿ', '&&xff')
+  if (string) { return string.replace('ÿ', '&&xff') }
+  return string
 }
 
 
@@ -100,7 +100,7 @@ function makeRange (query, pl_opts) {
   function reduceV (acc, item) {
     if (!Array.isArray(item)) { item = [ item ] }
     acc.gte.push(esc(item[0]))
-    acc.lte.push(esc(item[1] || item[0]))
+    acc.lte.push(esc(item.length > 1 ? item[1] : item[0]))
 
     return acc
   }
@@ -116,6 +116,5 @@ function makeRange (query, pl_opts) {
     lte: 'ÿ' + esc(query.k.join(',')) + 'ÿ' + lte.join('ÿ') + 'ÿÿ'
   }
 
-  return _.extend(pl_opts || {}, range)
+  return r.mixin(pl_opts || {}, range)
 }
-
