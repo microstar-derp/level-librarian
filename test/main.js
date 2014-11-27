@@ -187,10 +187,10 @@ test('\n\n.read(db, query[, options])', function(t) {
   }]
 
   pull(
-    llibrarian.read(db, query), // <-- Here's how you do it
+    llibrarian.read(db, queryA), // <-- Here's how you do it
     pull.collect(function(err, arr) {
-      console.log(string, JSON.stringify(arr))
-      t.deepEqual(arr, result, string)
+      console.log('A', JSON.stringify(arr))
+      t.deepEqual(arr, resultA, 'A')
     })
   )
 
