@@ -287,40 +287,44 @@ test('\n\n.addIndexDocs(indexes)', function (t) {
     }
   }
 
+  var expected = [
+  {
+    key: 'ÿcontent.scoreÿ4ÿw32fwfw33ÿ',
+    type: 'put',
+    value: 'w32fwfw33'
+  },
+  {
+    key: 'ÿcontent.score,timestampÿ4ÿ29304857ÿw32fwfw33ÿ',
+    type: 'put',
+    value: 'w32fwfw33'
+  },
+  {
+    key: 'ÿcontent.score,$latestÿ4ÿÿ',
+    type: 'put',
+    value: 'w32fwfw33'
+  },
+  {
+    key: 'w32fwfw33',
+    type: 'put',
+    value: {
+      content: {
+        name: 'richard',
+        score: 4
+      },
+      timestamp: '29304857'
+    }
+  }]
+
   pull(
     pull.values([doc]),
     llibrarian.addIndexDocs(indexes),
     pull.collect(function(err, arr) {
       console.log(JSON.stringify(arr))
-      t.deepEqual(arr, result)
+      t.deepEqual(arr, expected)
       t.end()
     })
   )
 
-  var result = [{
-    'key': 'w32fwfw33',
-    'value': {
-      'timestamp': '29304857',
-      'content': {
-        'name': 'richard',
-        'score': 4
-      }
-    },
-    'type': 'put'
-  },
-  {
-    'key': 'ÿcontent.scoreÿ4ÿw32fwfw33ÿ',
-    'value': 'w32fwfw33',
-    'type': 'put'
-  }, {
-    'key': 'ÿcontent.score,timestampÿ4ÿ29304857ÿw32fwfw33ÿ',
-    'value': 'w32fwfw33',
-    'type': 'put'
-  }, {
-    'key': 'ÿcontent.score,$latestÿ4ÿÿ',
-    'value': 'w32fwfw33',
-    'type': 'put'
-  }]
 })
 /*
 ```
@@ -340,17 +344,16 @@ test('\n\n.resolveIndexDocs(db)', function (t) {
     value: '39djdjj31'
   }]
 
-  pull(
-    pull.values(docs),
-    llibrarian.addIndexDocs(indexes),
-    pull.collect(function(err, arr) {
-      console.log(JSON.stringify(arr))
-      t.deepEqual(arr, results)
-      t.end()
-    })
-  )
-
-  var results = [{
+  var expected = [{
+    key: 'dlnqoq003',
+    value: {
+      timestamp: '29304990',
+      content: {
+        name: 'jeff',
+        score: 4
+      }
+    }
+  }, {
     key: 'w32fwfw33',
     value: {
       timestamp: '29304857',
@@ -368,35 +371,18 @@ test('\n\n.resolveIndexDocs(db)', function (t) {
         score: 5
       }
     }
-  }, {
-    key: 'dlnqoq003',
-    value: {
-      timestamp: '29304990',
-      content: {
-        name: 'jeff',
-        score: 4
-      }
-    }
   }]
+
+  pull(
+    pull.values(docs),
+    llibrarian.resolveIndexDocs(db),
+    pull.collect(function(err, arr) {
+      console.log(JSON.stringify(arr))
+      t.deepEqual(arr, expected)
+      t.end()
+    })
+  )
 })
-/*
-```
-# Pure functions
-These are used in `.resolveindexDocs()` and `.addIndexDocs()`.
-
-## .makeIndexDocs(doc, indexes)
-TODO
-
-## .makeIndexDoc(doc, index)
-TODO
-
-## .makeRange(query, options)
-TODO
-
-```javascript
-/**/
-
-
 /*
 ```
 /**/

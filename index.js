@@ -4,6 +4,7 @@ var access = require('safe-access')
 var pull = require('pull-stream')
 var pl = require('pull-level')
 var _ = require('lodash')
+var r = require('ramda')
 
 module.exports = {
   read: read,
@@ -21,18 +22,18 @@ function esc (string) {
 }
 
 
-function read (db, query, options) {
+function read (db, query, pl_opts) {
   return pull(
-    pl.read(db, makeRange(query, options)),
+    pl.read(db, makeRange(query, pl_opts)),
     resolveIndexDocs(db)
   )
 }
 
 
-function write (db, indexes, opts, done) {
+function write (db, indexes, pl_opts, done) {
   return pull(
     addIndexDocs(indexes),
-    pl.write(db, opts, done)
+    pl.write(db, pl_opts, done)
   )
 }
 
@@ -92,25 +93,29 @@ function makeIndexDoc (doc, index) {
 }
 
 
-function makeRange (query, options) {
+function makeRange (query, pl_opts) {
   if (!Array.isArray(query.k)) { query.k = [ query.k ] }
   if (!Array.isArray(query.v)) { query.v = [ query.v ] }
 
-  var gte = []
-  var lte = []
-
-  query.v.forEach(function (item) {
+  function reduceV (acc, item) {
     if (!Array.isArray(item)) { item = [ item ] }
+    acc.gte.push(esc(item[0]))
+    acc.lte.push(esc(item[1] || item[0]))
 
-    gte.push(esc(item[0]))
-    lte.push(esc(item[1] || item[0]))
-  })
+    return acc
+  }
+
+  var acc = r.reduce(reduceV, { gte: [], lte: [] }, query.v)
+
+  var compact = r.filter(r.identity)
+  var lte = compact(acc.lte)
+  var gte = compact(acc.gte)
 
   var range = {
     gte: 'ÿ' + esc(query.k.join(',')) + 'ÿ' + gte.join('ÿ') + 'ÿ',
     lte: 'ÿ' + esc(query.k.join(',')) + 'ÿ' + lte.join('ÿ') + 'ÿÿ'
   }
 
-  return _.extend(options || {}, range)
+  return _.extend(pl_opts || {}, range)
 }
 
