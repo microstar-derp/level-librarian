@@ -62,14 +62,14 @@ var indexes = [
 
   // You can pass an options object in the array. Right now, the only option
   // is `latest`. It will only index the latest document with a given value at the keypath.
-  ['content.score', '$latest']
+  ['content.score', '$latest'],
   // Key generated: 'ÿcontent.scoreÿ4ÿ'
   // (Any subsequent documents with a content.score of 4 will overwrite this)
 
 ]
 
 
-test('\n\n.write(db, indexes)', function(t) {
+test('\n\n.write(db, indexes)', function (t) {
   var docs = [{
     key: 'w32fwfw33',
     value: {
@@ -110,8 +110,8 @@ test('\n\n.write(db, indexes)', function(t) {
   function checkDB () {
     pull(
       pl.read(db),
-      pull.collect(function(err, arr) {
-        console.log(JSON.stringify(arr))
+      pull.collect(function (err, arr) {
+        t.error(err)
         t.deepEqual(arr, dbContents, '.write(db, indexes)')
         t.end()
       })
@@ -119,38 +119,38 @@ test('\n\n.write(db, indexes)', function(t) {
   }
 
   var dbContents = [{
-    key: '39djdjj31',
-    value: {'timestamp':'29304932','content':{'name':'mary','score':5}}
+      key: '39djdjj31',
+      value: {content: {name: 'mary',score: 5},timestamp: '29304932'}
   }, {
-    key: 'dlnqoq003',
-    value: {'timestamp':'29304990','content':{'name':'jeff','score':4}}
+      key: 'dlnqoq003',
+      value: {content: {name: 'jeff',score: 4},timestamp: '29304990'}
   }, {
-    key: 'w32fwfw33',
-    value: {'timestamp':'29304857','content':{'name':'richard','score':4}}
+      key: 'w32fwfw33',
+      value: {content: {name: 'richard',score: 4},timestamp: '29304857'}
   }, {
-    key: 'ÿcontent.score,$latestÿ4ÿÿ',
-    value: 'dlnqoq003'
+      key: 'ÿcontent.score,$latestÿ4ÿÿ',
+      value: 'dlnqoq003'
   }, {
-    key: 'ÿcontent.score,$latestÿ5ÿÿ',
-    value: '39djdjj31'
+      key: 'ÿcontent.score,$latestÿ5ÿÿ',
+      value: '39djdjj31'
   }, {
-    key: 'ÿcontent.score,timestampÿ4ÿ29304857ÿw32fwfw33ÿ',
-    value: 'w32fwfw33'
+      key: 'ÿcontent.score,timestampÿ4ÿ29304857ÿw32fwfw33ÿ',
+      value: 'w32fwfw33'
   }, {
-    key: 'ÿcontent.score,timestampÿ4ÿ29304990ÿdlnqoq003ÿ',
-    value: 'dlnqoq003'
+      key: 'ÿcontent.score,timestampÿ4ÿ29304990ÿdlnqoq003ÿ',
+      value: 'dlnqoq003'
   }, {
-    key: 'ÿcontent.score,timestampÿ5ÿ29304932ÿ39djdjj31ÿ',
-    value: '39djdjj31'
+      key: 'ÿcontent.score,timestampÿ5ÿ29304932ÿ39djdjj31ÿ',
+      value: '39djdjj31'
   }, {
-    key: 'ÿcontent.scoreÿ4ÿdlnqoq003ÿ',
-    value: 'dlnqoq003'
+      key: 'ÿcontent.scoreÿ4ÿdlnqoq003ÿ',
+      value: 'dlnqoq003'
   }, {
-    key: 'ÿcontent.scoreÿ4ÿw32fwfw33ÿ',
-    value: 'w32fwfw33'
+      key: 'ÿcontent.scoreÿ4ÿw32fwfw33ÿ',
+      value: 'w32fwfw33'
   }, {
-    key: 'ÿcontent.scoreÿ5ÿ39djdjj31ÿ',
-    value: '39djdjj31'
+      key: 'ÿcontent.scoreÿ5ÿ39djdjj31ÿ',
+      value: '39djdjj31'
   }]
 })
 /*
@@ -172,8 +172,8 @@ index off, level-librarian will find documents with any value at that
 position.
 ```javascript
 /**/
-test('\n\n.read(db, query[, options])', function(t) {
-  t.plan(6)
+test('\n\n.read(db, query[, options])', function (t) {
+  t.plan(13)
 
   // This should retrieve all documents with a score of 4
   var queryA = {
@@ -190,10 +190,10 @@ test('\n\n.read(db, query[, options])', function(t) {
   }]
 
   pull(
-    llibrarian.read(db, query), // <-- Here's how you do it
+    llibrarian.read(db, queryA), // <-- Here's how you do it
     pull.collect(function(err, arr) {
-      console.log(string, JSON.stringify(arr))
-      t.deepEqual(arr, result, string)
+      console.log('A', JSON.stringify(arr))
+      t.deepEqual(arr, resultA, 'A')
     })
   )
 
@@ -202,6 +202,7 @@ test('\n\n.read(db, query[, options])', function(t) {
     pull(
       llibrarian.read(db, query),
       pull.collect(function(err, arr) {
+        t.error(err)
         console.log(string, JSON.stringify(arr))
         t.deepEqual(arr, result, string)
       })
@@ -285,6 +286,21 @@ test('\n\n.read(db, query[, options])', function(t) {
   }]
 
   check(queryF, resultF, 'F')
+
+  // This should retrieve the last document with a score of 4, ordered by
+  // timestamp
+  var queryG = {
+    k: ['content.score', 'timestamp'],
+    v: '4', // Timestamp value left off
+    peek: 'last'
+  }
+
+  var resultG = [{
+    key: 'dlnqoq003',
+    value: {'timestamp':'29304990','content':{'name':'jeff','score':4}}
+  }]
+
+  check(queryG, resultG, 'G')
 })
 
 /*
