@@ -23,11 +23,13 @@ var db = level('./test.db', { valueEncoding: 'json' })
 /*
 ```
 # High level
-## .write(db, indexes[, opts, done])
+## .write(db, indexes[, opts, callback])
 Returns a pull-stream sink that writes a stream of documents to the db, adding
 index documents as well.
 - `db`: A leveldb.
 - `indexes`: An array of index keypaths.
+- `opts` are options to pass to levelup
+- `callback` is called with an error arg when all documents have been written
 
 #### Indexes array
 level-librarian consumes index definitions as an object or array of keypaths,
@@ -99,7 +101,8 @@ test('\n\n.write(db, indexes)', function(t) {
 
   pull(
     pull.values(docs),
-    llibrarian.write(db, indexes, null, function() { // <-- Here's how you do it
+    llibrarian.write(db, indexes, null, function(err) { // <-- Here's how you do it
+      t.error(err)
       checkDB()
     })
   )
@@ -187,10 +190,10 @@ test('\n\n.read(db, query[, options])', function(t) {
   }]
 
   pull(
-    llibrarian.read(db, queryA), // <-- Here's how you do it
+    llibrarian.read(db, query), // <-- Here's how you do it
     pull.collect(function(err, arr) {
-      console.log('A', JSON.stringify(arr))
-      t.deepEqual(arr, resultA, 'A')
+      console.log(string, JSON.stringify(arr))
+      t.deepEqual(arr, result, string)
     })
   )
 

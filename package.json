@@ -7,7 +7,7 @@
     "test": "test"
   },
   "scripts": {
-    "test": "node ./test/main.js"
+    "test": "node ./test/index.js"
   },
   "keywords": [
     "level",
@@ -30,6 +30,7 @@
     "lodash": "^2.4.1",
     "pull-stream": "^2.26.0",
     "pull-level": "^1.2.0",
-    "ramda": "^0.8.0"
+    "ramda": "^0.8.0",
+    "level-peek": "^2.0.0"
   }
 }

@@ -4,6 +4,7 @@ var access = require('safe-access')
 var pull = require('pull-stream')
 var pl = require('pull-level')
 var r = require('ramda')
+var peek = require('level-peek')
 
 module.exports = {
   read: read,
@@ -22,18 +23,38 @@ function esc (string) {
 }
 
 
-function read (db, query, pl_opts) {
-  return pull(
-    pl.read(db, makeRange(query, pl_opts)),
-    resolveIndexDocs(db)
-  )
+function read (db, query, level_opts) {
+  var range = makeRange(query, level_opts)
+  var deferred = pull.defer()
+
+
+  if (query.peek) {
+    peek[query.peek](db, range, function (err, key, value) {
+      deferred.resolve(
+        pull(
+          pull.values([{ key: key, value: value }]),
+          resolveIndexDocs(db)
+        )
+      )
+    })
+  }
+  else {
+    deferred.resolve(
+      pull(
+        pl.read(db, range),
+        resolveIndexDocs(db)
+      )
+    )
+  }
+
+  return deferred
 }
 
 
-function write (db, indexes, pl_opts, done) {
+function write (db, indexes, level_opts, done) {
   return pull(
     addIndexDocs(indexes),
-    pl.write(db, pl_opts, done)
+    pl.write(db, level_opts, done)
   )
 }
 
@@ -93,7 +114,7 @@ function makeIndexDoc (doc, index) {
 }
 
 
-function makeRange (query, pl_opts) {
+function makeRange (query, level_opts) {
   if (!Array.isArray(query.k)) { query.k = [ query.k ] }
   if (!Array.isArray(query.v)) { query.v = [ query.v ] }
 
@@ -116,5 +137,5 @@ function makeRange (query, pl_opts) {
     lte: 'ÿ' + esc(query.k.join(',')) + 'ÿ' + lte.join('ÿ') + 'ÿÿ'
   }
 
-  return r.mixin(pl_opts || {}, range)
+  return r.mixin(level_opts || {}, range)
 }
