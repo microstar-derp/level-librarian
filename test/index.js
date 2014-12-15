@@ -170,6 +170,7 @@ level-librarian expects queries as objects with `k` and `v` properties.
 values, level-librarian will find the documents in that range. If you leave an
 index off, level-librarian will find documents with any value at that
 position.
+
 ```javascript
 /**/
 test('\n\n.read(db, query[, options])', function (t) {
