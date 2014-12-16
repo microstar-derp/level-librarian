@@ -50,11 +50,27 @@ function read (db, query, level_opts) {
   return deferred
 }
 
+function readOne (db, query, level_opts, callback) {
+  level_opts.limit = 1
+  return pull(
+    read(db, query, level_opts),
+    pull.collect(function (err, arr) {
+      callback(err || null, arr[0])
+    })
+  )
+}
 
-function write (db, indexes, level_opts, done) {
+function writeOne (db, indexes, doc, level_opts, callback) {
+  return pull(
+    pull.values([doc]),
+    write(db, indexes, level_opts, callback)
+  )
+}
+
+function write (db, indexes, level_opts, callback) {
   return pull(
     addIndexDocs(indexes),
-    pl.write(db, level_opts, done)
+    pl.write(db, indexes, level_opts, callback)
   )
 }
 
