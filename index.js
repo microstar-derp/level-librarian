@@ -6,16 +6,35 @@ var pl = require('pull-level')
 var r = require('ramda')
 var peek = require('level-peek')
 
-module.exports = {
-  read: read,
-  write: write,
-  resolveIndexDocs: resolveIndexDocs,
-  addIndexDocs: addIndexDocs,
-  makeIndexDocs: makeIndexDocs,
-  makeIndexDoc: makeIndexDoc,
-  makeRange: makeRange
+module.exports = function (settings) {
+  return {
+    read: read.bind(null, settings),
+    readOne: readOne.bind(null, settings),
+    write: write.bind(null, settings),
+    writeOne: writeOne.bind(null, settings),
+    resolveIndexDocs: resolveIndexDocs,
+    addIndexDocs: addIndexDocs,
+    makeIndexDocs: makeIndexDocs,
+    makeIndexDoc: makeIndexDoc,
+    makeRange: makeRange
+  }
 }
 
+module.exports.read = read
+module.exports.readOne = readOne
+module.exports.write = write
+module.exports.writeOne = writeOne
+module.exports.resolveIndexDocs = resolveIndexDocs
+module.exports.addIndexDocs = addIndexDocs
+module.exports.makeIndexDocs = makeIndexDocs
+module.exports.makeIndexDoc = makeIndexDoc
+module.exports.makeRange = makeRange
+
+// settings = {
+//   db: JS,
+//   indexes: JSON,
+//   level_opts: JSON
+// }
 
 function esc (string) {
   if (string) { return string.replace('ÿ', '&&xff') }
@@ -23,17 +42,16 @@ function esc (string) {
 }
 
 
-function read (db, query, level_opts) {
-  var range = makeRange(query, level_opts)
+function read (settings, query) {
+  var range = makeRange(query, settings.level_opts)
   var deferred = pull.defer()
 
-
   if (query.peek) {
-    peek[query.peek](db, range, function (err, key, value) {
+    peek[query.peek](settings.db, range, function (err, key, value) {
       deferred.resolve(
         pull(
           pull.values([{ key: key, value: value }]),
-          resolveIndexDocs(db)
+          resolveIndexDocs(settings.db)
         )
       )
     })
@@ -41,8 +59,8 @@ function read (db, query, level_opts) {
   else {
     deferred.resolve(
       pull(
-        pl.read(db, range),
-        resolveIndexDocs(db)
+        pl.read(settings.db, range),
+        resolveIndexDocs(settings.db)
       )
     )
   }
@@ -50,27 +68,29 @@ function read (db, query, level_opts) {
   return deferred
 }
 
-function readOne (db, query, level_opts, callback) {
-  level_opts.limit = 1
-  return pull(
-    read(db, query, level_opts),
+function readOne (settings, query, callback) {
+  settings = r.cloneDeep(settings)
+  settings.level_opts = settings.level_opts || {}
+  settings.level_opts.limit = 1
+  pull(
+    read(settings, query),
     pull.collect(function (err, arr) {
       callback(err || null, arr[0])
     })
   )
 }
 
-function writeOne (db, indexes, doc, level_opts, callback) {
+function write (settings, callback) {
   return pull(
-    pull.values([doc]),
-    write(db, indexes, level_opts, callback)
+    addIndexDocs(settings.indexes),
+    pl.write(settings.db, settings.level_opts, callback)
   )
 }
 
-function write (db, indexes, level_opts, callback) {
-  return pull(
-    addIndexDocs(indexes),
-    pl.write(db, indexes, level_opts, callback)
+function writeOne (settings, doc, callback) {
+  pull(
+    pull.values([doc]),
+    write(settings, callback)
   )
 }
 
