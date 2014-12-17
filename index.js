@@ -5,6 +5,7 @@ var pull = require('pull-stream')
 var pl = require('pull-level')
 var r = require('ramda')
 var peek = require('level-peek')
+var typeCheck = require('type-check').typeCheck;
 
 module.exports = function (settings) {
   return {
@@ -43,6 +44,10 @@ function esc (string) {
 
 
 function read (settings, query) {
+  if(!typeCheck('{ createIfMissing: Boolean, ... }', settings.db.options)) {
+    throw new Error('settings.db is not supposed to be ' + settings.db)
+  }
+
   var range = makeRange(query, settings.level_opts)
   var deferred = pull.defer()
 
@@ -81,6 +86,13 @@ function readOne (settings, query, callback) {
 }
 
 function write (settings, callback) {
+  if(!typeCheck('[String|[String]]', settings.indexes)) {
+    throw new Error('settings.indexes is not supposed to be ' + settings.indexes)
+  }
+  if(!typeCheck('{ createIfMissing: Boolean, ... }', settings.db.options)) {
+    throw new Error('settings.db is not supposed to be ' + settings.db)
+  }
+
   return pull(
     addIndexDocs(settings.indexes),
     pl.write(settings.db, settings.level_opts, callback)
