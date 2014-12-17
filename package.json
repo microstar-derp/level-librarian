@@ -1,6 +1,6 @@
 {
   "name": "level-librarian",
-  "version": "0.0.3",
+  "version": "0.0.4"
   "description": "Lightweight indexing for leveldb. Nothing fancy.",
   "main": "index.js",
   "directories": {
