@@ -86,9 +86,6 @@ function readOne (settings, query, callback) {
 }
 
 function write (settings, callback) {
-  if(!typeCheck('[String|[String]]', settings.indexes)) {
-    throw new Error('settings.indexes is not supposed to be ' + settings.indexes)
-  }
   if(!typeCheck('{ createIfMissing: Boolean, ... }', settings.db.options)) {
     throw new Error('settings.db is not supposed to be ' + settings.db)
   }
@@ -127,7 +124,12 @@ function addIndexDocs (indexes) {
 
 
 function makeIndexDocs (doc, indexes) {
-  var batch = [];
+  if(!typeCheck('[String|[String]]', indexes)) {
+    throw new Error('indexes is not supposed to be ' + indexes)
+  }
+
+  indexes = r.uniq(indexes)
+  var batch = []
 
   // Generate an index doc for each index
   Object.keys(indexes).forEach(function (key) {
