@@ -1,3 +1,7 @@
+// TODO
+// test with duplicate indexes
+// test with indexes as object
+
 'use strict';
 
 var test = require('tape')

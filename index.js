@@ -5,7 +5,7 @@ var pull = require('pull-stream')
 var pl = require('pull-level')
 var r = require('ramda')
 var peek = require('level-peek')
-var typeCheck = require('type-check').typeCheck;
+var tc = require('type-check').typeCheck;
 
 module.exports = function (settings) {
   return {
@@ -44,7 +44,7 @@ function esc (string) {
 
 
 function read (settings, query) {
-  if(!typeCheck('{ createIfMissing: Boolean, ... }', settings.db.options)) {
+  if(!tc('{ createIfMissing: Boolean, ... }', settings.db.options)) {
     throw new Error('settings.db is not supposed to be ' + settings.db)
   }
 
@@ -86,7 +86,7 @@ function readOne (settings, query, callback) {
 }
 
 function write (settings, callback) {
-  if(!typeCheck('{ createIfMissing: Boolean, ... }', settings.db.options)) {
+  if(!tc('{ createIfMissing: Boolean, ... }', settings.db.options)) {
     throw new Error('settings.db is not supposed to be ' + settings.db)
   }
 
@@ -124,11 +124,10 @@ function addIndexDocs (indexes) {
 
 
 function makeIndexDocs (doc, indexes) {
-  if(!typeCheck('[String|[String]]', indexes)) {
+  if (!tc('[String|[String]]', indexes)) {
     throw new Error('indexes is not supposed to be ' + indexes)
   }
 
-  indexes = r.uniq(indexes)
   var batch = []
 
   // Generate an index doc for each index
