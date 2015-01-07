@@ -38,8 +38,7 @@ module.exports.makeRange = makeRange
 // }
 
 function esc (string) {
-  if (string) { return string.replace('ÿ', '&&xff') }
-  return string
+  if (string) { return String(string).replace('ÿ', '&&xff') }
 }
 
 
