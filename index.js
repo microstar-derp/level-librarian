@@ -107,7 +107,7 @@ function writeOne (settings, doc, callback) {
 function resolveIndexDocs (db) {
   return pull.asyncMap(function (data, callback) {
     db.get(data.value, function (err, value) {
-      callback(null, { key: data.value, value: value })
+      callback(null, value && { key: data.value, value: value })
     })
   })
 }
