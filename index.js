@@ -11,8 +11,10 @@ module.exports = function (settings) {
   return {
     read: read.bind(null, settings),
     readOne: makeReadOne(read).bind(null, settings),
+    makeReadOne: makeReadOne,
     write: write.bind(null, settings),
-    writeOne: writeOne.bind(null, settings),
+    writeOne: makeWriteOne(write).bind(null, settings),
+    makeWriteOne: makeWriteOne,
     resolveIndexDocs: resolveIndexDocs,
     addIndexDocs: addIndexDocs,
     makeIndexDocs: makeIndexDocs,
@@ -23,8 +25,10 @@ module.exports = function (settings) {
 
 module.exports.read = read
 module.exports.readOne = makeReadOne(read)
+module.exports.makeReadOne = makeReadOne
 module.exports.write = write
-module.exports.writeOne = writeOne
+module.exports.writeOne = makeWriteOne(write)
+module.exports.makeWriteOne = makeWriteOne
 module.exports.resolveIndexDocs = resolveIndexDocs
 module.exports.addIndexDocs = addIndexDocs
 module.exports.makeIndexDocs = makeIndexDocs
@@ -97,11 +101,13 @@ function write (settings, callback) {
   )
 }
 
-function writeOne (settings, doc, callback) {
-  pull(
-    pull.values([doc]),
-    write(settings, callback)
-  )
+function makeWriteOne (write) {
+  return function writeOne (settings, doc, callback) {
+    pull(
+      pull.values([doc]),
+      write(settings, callback)
+    )
+  }
 }
 
 
