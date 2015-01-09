@@ -26,8 +26,6 @@ var settings = {
   db: db
 }
 
-llibrarian = llibrarian(settings)
-
 
 test('\n\n.write(settings)', function (t) {
   var docs = [{
@@ -61,7 +59,7 @@ test('\n\n.write(settings)', function (t) {
 
   pull(
     pull.values(docs),
-    llibrarian.write(function (err) {
+    llibrarian.write(settings, function (err) {
       t.error(err)
       checkDB()
     })
@@ -133,7 +131,7 @@ test('\n\n.read(settings, query)', function (t) {
   }]
 
   pull(
-    llibrarian.read(queryA),
+    llibrarian.read(settings, queryA),
     pull.collect(function(err, arr) {
       console.log('A', JSON.stringify(arr))
       t.deepEqual(arr, resultA, 'A')
@@ -143,7 +141,7 @@ test('\n\n.read(settings, query)', function (t) {
   // Reduce reptition of test code
   function check (query, result, string) {
     pull(
-      llibrarian.read(query),
+      llibrarian.read(settings, query),
       pull.collect(function(err, arr) {
         t.error(err)
         console.log(string, JSON.stringify(arr))
@@ -249,7 +247,7 @@ test('\n\n.read(settings, query)', function (t) {
 
 test('\n\n.readOne(settings, query, callback)', function (t) {
   function check (query, result, string) {
-    llibrarian.readOne(query, function (err, item) {
+    llibrarian.readOne(settings, query, function (err, item) {
       t.error(err)
       console.log(string, JSON.stringify(item))
       t.deepEqual(item, result, string)

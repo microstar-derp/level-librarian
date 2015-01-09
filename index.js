@@ -7,33 +7,19 @@ var r = require('ramda')
 var peek = require('level-peek')
 var tc = require('type-check').typeCheck;
 
-module.exports = function (settings) {
-  return {
-    read: read.bind(null, settings),
-    readOne: makeReadOne(read).bind(null, settings),
-    makeReadOne: makeReadOne,
-    write: write.bind(null, settings),
-    writeOne: makeWriteOne(write).bind(null, settings),
-    makeWriteOne: makeWriteOne,
-    resolveIndexDocs: resolveIndexDocs,
-    addIndexDocs: addIndexDocs,
-    makeIndexDocs: makeIndexDocs,
-    makeIndexDoc: makeIndexDoc,
-    makeRange: makeRange
-  }
+module.exports = {
+  read: read,
+  readOne: makeReadOne(read),
+  makeReadOne: makeReadOne,
+  write: write,
+  writeOne: makeWriteOne(write),
+  makeWriteOne: makeWriteOne,
+  resolveIndexDocs: resolveIndexDocs,
+  addIndexDocs: addIndexDocs,
+  makeIndexDocs: makeIndexDocs,
+  makeIndexDoc: makeIndexDoc,
+  makeRange: makeRange
 }
-
-module.exports.read = read
-module.exports.readOne = makeReadOne(read)
-module.exports.makeReadOne = makeReadOne
-module.exports.write = write
-module.exports.writeOne = makeWriteOne(write)
-module.exports.makeWriteOne = makeWriteOne
-module.exports.resolveIndexDocs = resolveIndexDocs
-module.exports.addIndexDocs = addIndexDocs
-module.exports.makeIndexDocs = makeIndexDocs
-module.exports.makeIndexDoc = makeIndexDoc
-module.exports.makeRange = makeRange
 
 // settings = {
 //   db: JS,
