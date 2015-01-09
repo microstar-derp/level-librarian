@@ -10,7 +10,7 @@ var tc = require('type-check').typeCheck;
 module.exports = function (settings) {
   return {
     read: read.bind(null, settings),
-    readOne: readOne.bind(null, settings),
+    readOne: makeReadOne(read).bind(null, settings),
     write: write.bind(null, settings),
     writeOne: writeOne.bind(null, settings),
     resolveIndexDocs: resolveIndexDocs,
@@ -22,7 +22,7 @@ module.exports = function (settings) {
 }
 
 module.exports.read = read
-module.exports.readOne = readOne
+module.exports.readOne = makeReadOne(read)
 module.exports.write = write
 module.exports.writeOne = writeOne
 module.exports.resolveIndexDocs = resolveIndexDocs
@@ -72,16 +72,18 @@ function read (settings, query) {
   return deferred
 }
 
-function readOne (settings, query, callback) {
-  settings = r.cloneDeep(settings)
-  settings.level_opts = settings.level_opts || {}
-  settings.level_opts.limit = 1
-  pull(
-    read(settings, query),
-    pull.collect(function (err, arr) {
-      callback(err || null, arr[0])
-    })
-  )
+function makeReadOne (read) {
+  return function readOne (settings, query, callback) {
+    settings = r.cloneDeep(settings)
+    settings.level_opts = settings.level_opts || {}
+    settings.level_opts.limit = 1
+    pull(
+      read(settings, query),
+      pull.collect(function (err, arr) {
+        callback(err || null, arr[0])
+      })
+    )
+  }
 }
 
 function write (settings, callback) {
