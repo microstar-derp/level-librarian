@@ -64,13 +64,10 @@ function read (settings, query) {
 
 function makeReadOne (read) {
   return function readOne (settings, query, callback) {
-    settings = r.cloneDeep(settings)
-    settings.level_opts = settings.level_opts || {}
-    settings.level_opts.limit = 1
     pull(
       read(settings, query),
       pull.collect(function (err, arr) {
-        callback(err || null, arr[0])
+        callback(err, arr[0])
       })
     )
   }
@@ -105,7 +102,6 @@ function resolveIndexDocs (db) {
   })
 }
 
-
 function addIndexDocs (indexes) {
   return pull(
     pull.map(function (item) {
@@ -114,7 +110,6 @@ function addIndexDocs (indexes) {
     pull.flatten()
   )
 }
-
 
 function makeIndexDocs (doc, indexes) {
   if (!tc('[String|[String]]', indexes)) {
@@ -149,7 +144,7 @@ function makeIndexDoc (doc, index) {
   })
 
   return {
-    key: 'ÿ' + index.join(',') + 'ÿ' + val.join('ÿ') + 'ÿ' + maybeKey + 'ÿ',
+    key: 'ÿiÿ' + index.join(',') + 'ÿ' + val.join('ÿ') + 'ÿ' + maybeKey + 'ÿ',
     value: doc.key,
     type: 'put'
   }
@@ -175,8 +170,8 @@ function makeRange (query, level_opts) {
   var gte = compact(acc.gte)
 
   var range = {
-    gte: 'ÿ' + esc(query.k.join(',')) + 'ÿ' + gte.join('ÿ') + 'ÿ',
-    lte: 'ÿ' + esc(query.k.join(',')) + 'ÿ' + lte.join('ÿ') + 'ÿÿ'
+    gte: 'ÿiÿ' + esc(query.k.join(',')) + 'ÿ' + gte.join('ÿ') + 'ÿ',
+    lte: 'ÿiÿ' + esc(query.k.join(',')) + 'ÿ' + lte.join('ÿ') + 'ÿÿ'
   }
 
   return r.mixin(level_opts || {}, range)

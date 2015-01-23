@@ -5,15 +5,12 @@
 'use strict';
 
 var test = require('tape')
-var level = require('level')
+var level = require('level-test')()
 var llibrarian = require('../index.js')
 var pull = require('pull-stream')
 var pl = require('pull-level')
-var rimraf = require('rimraf')
-var r = require('ramda')
 
-rimraf.sync('./test.db')
-var db = level('./test.db', { valueEncoding: 'json' })
+var db = level('./test1.db', { valueEncoding: 'json' })
 
 var indexes = [
   'content.score',
@@ -77,41 +74,58 @@ test('\n\n.write(settings)', function (t) {
   }
 
   var dbContents = [{
-      key: '39djdjj31',
-      value: {content: {name: 'mary',score: 5},timestamp: '29304932'}
+    key: '39djdjj31',
+    value: {
+      content: {
+        name: 'mary',
+        score: 5
+      },
+      timestamp: '29304932'
+    }
   }, {
-      key: 'dlnqoq003',
-      value: {content: {name: 'jeff',score: 4},timestamp: '29304990'}
+    key: 'dlnqoq003',
+    value: {
+      content: {
+        name: 'jeff',
+        score: 4
+      },
+      timestamp: '29304990'
+    }
   }, {
-      key: 'w32fwfw33',
-      value: {content: {name: 'richard',score: 4},timestamp: '29304857'}
+    key: 'w32fwfw33',
+    value: {
+      content: {
+        name: 'richard',
+        score: 4
+      },
+      timestamp: '29304857'
+    }
   }, {
-      key: 'ÿcontent.score,$latestÿ4ÿÿ',
-      value: 'dlnqoq003'
+    key: 'ÿiÿcontent.score,$latestÿ4ÿÿ',
+    value: 'dlnqoq003'
   }, {
-      key: 'ÿcontent.score,$latestÿ5ÿÿ',
-      value: '39djdjj31'
+    key: 'ÿiÿcontent.score,$latestÿ5ÿÿ',
+    value: '39djdjj31'
   }, {
-      key: 'ÿcontent.score,timestampÿ4ÿ29304857ÿw32fwfw33ÿ',
-      value: 'w32fwfw33'
+    key: 'ÿiÿcontent.score,timestampÿ4ÿ29304857ÿw32fwfw33ÿ',
+    value: 'w32fwfw33'
   }, {
-      key: 'ÿcontent.score,timestampÿ4ÿ29304990ÿdlnqoq003ÿ',
-      value: 'dlnqoq003'
+    key: 'ÿiÿcontent.score,timestampÿ4ÿ29304990ÿdlnqoq003ÿ',
+    value: 'dlnqoq003'
   }, {
-      key: 'ÿcontent.score,timestampÿ5ÿ29304932ÿ39djdjj31ÿ',
-      value: '39djdjj31'
+    key: 'ÿiÿcontent.score,timestampÿ5ÿ29304932ÿ39djdjj31ÿ',
+    value: '39djdjj31'
   }, {
-      key: 'ÿcontent.scoreÿ4ÿdlnqoq003ÿ',
-      value: 'dlnqoq003'
+    key: 'ÿiÿcontent.scoreÿ4ÿdlnqoq003ÿ',
+    value: 'dlnqoq003'
   }, {
-      key: 'ÿcontent.scoreÿ4ÿw32fwfw33ÿ',
-      value: 'w32fwfw33'
+    key: 'ÿiÿcontent.scoreÿ4ÿw32fwfw33ÿ',
+    value: 'w32fwfw33'
   }, {
-      key: 'ÿcontent.scoreÿ5ÿ39djdjj31ÿ',
-      value: '39djdjj31'
+    key: 'ÿiÿcontent.scoreÿ5ÿ39djdjj31ÿ',
+    value: '39djdjj31'
   }]
 })
-
 
 test('\n\n.read(settings, query)', function (t) {
   t.plan(13)
@@ -282,23 +296,19 @@ test('\n\n.addIndexDocs(indexes)', function (t) {
     }
   }
 
-  var expected = [
-  {
-    key: 'ÿcontent.scoreÿ4ÿw32fwfw33ÿ',
+  var expected = [{
+    key: 'ÿiÿcontent.scoreÿ4ÿw32fwfw33ÿ',
     type: 'put',
     value: 'w32fwfw33'
-  },
-  {
-    key: 'ÿcontent.score,timestampÿ4ÿ29304857ÿw32fwfw33ÿ',
+  }, {
+    key: 'ÿiÿcontent.score,timestampÿ4ÿ29304857ÿw32fwfw33ÿ',
     type: 'put',
     value: 'w32fwfw33'
-  },
-  {
-    key: 'ÿcontent.score,$latestÿ4ÿÿ',
+  }, {
+    key: 'ÿiÿcontent.score,$latestÿ4ÿÿ',
     type: 'put',
     value: 'w32fwfw33'
-  },
-  {
+  }, {
     key: 'w32fwfw33',
     type: 'put',
     value: {
@@ -309,6 +319,7 @@ test('\n\n.addIndexDocs(indexes)', function (t) {
       timestamp: '29304857'
     }
   }]
+
 
   pull(
     pull.values([doc]),
