@@ -104,8 +104,11 @@ function resolveIndexDocs (db) {
 
 function addIndexDocs (indexes) {
   return pull(
-    pull.map(function (item) {
-      return makeIndexDocs({ key: item.key, value: item.value }, indexes)
+    pull.map(function (doc) {
+      var batch = makeIndexDocs({ key: doc.key, value: doc.value }, indexes)
+      doc.type = 'put'
+      batch.push(doc)
+      return batch
     }),
     pull.flatten()
   )
@@ -122,9 +125,6 @@ function makeIndexDocs (doc, indexes) {
   Object.keys(indexes).forEach(function (key) {
     batch.push(makeIndexDoc(doc, indexes[key]))
   })
-
-  doc.type = 'put'
-  batch.push(doc)
 
   return batch
 }
