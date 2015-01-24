@@ -112,13 +112,13 @@ test('\n\n.write(db, indexes)', function (t) {
       pl.read(db),
       pull.collect(function (err, arr) {
         t.error(err)
-        t.deepEqual(arr, dbContents, '.write(db, indexes)')
+        t.deepEqual(arr, db_contents, '.write(db, indexes)')
         t.end()
       })
     )
   }
 
-  var dbContents = [{
+  var db_contents = [{
       key: '39djdjj31',
       value: {content: {name: 'mary',score: 5},timestamp: '29304932'}
   }, {

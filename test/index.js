@@ -67,13 +67,13 @@ test('\n\n.write(settings)', function (t) {
       pl.read(db),
       pull.collect(function (err, arr) {
         t.error(err)
-        t.deepEqual(arr, dbContents)
+        t.deepEqual(arr, db_contents)
         t.end()
       })
     )
   }
 
-  var dbContents = [{
+  var db_contents = [{
     key: '39djdjj31',
     value: {
       content: {
