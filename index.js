@@ -5,7 +5,9 @@ var pull = require('pull-stream')
 var pl = require('pull-level')
 var r = require('ramda')
 var peek = require('level-peek')
+var stringify = require('stable-stringify')
 var tc = require('type-check').typeCheck;
+require('colors')
 
 module.exports = {
   read: read,
@@ -27,8 +29,29 @@ module.exports = {
 //   level_opts: JSON
 // }
 
-function esc (string) {
-  if (string) { return String(string).replace('ÿ', '&&xff') }
+function colorize (string) {
+  var arr = string.split('')
+  var colors = [ 'blue', 'cyan', 'green', 'yellow', 'red', 'magenta' ]
+  var color
+  var output = []
+  arr.forEach(function (char) {
+    if (char === 'ÿ') {
+      color = colors.pop()
+      colors.unshift(color)
+      output.push('::'.grey)
+    } else {
+      output.push(char[color])
+    }
+  })
+  output.pop()
+  output = output.join('')
+  return output
+}
+
+function esc (value) {
+  if (value) {
+    return String(value).replace('ÿ', '&&xff')
+  }
 }
 
 
@@ -132,32 +155,38 @@ function makeIndexDocs (doc, indexes) {
 
 function makeIndexDoc (doc, index) {
   if (!Array.isArray(index)) { index = [ index ] }
-  var maybeKey = doc.key;
-  var val = []
 
-  index.forEach(function (keypath) {
-    if (keypath === '$latest') {
-      maybeKey = ''
-    } else {
-      val.push(esc(access(doc.value, keypath) + ''))
-    }
-  })
+  function reduceKey (acc, item) {
+    var index_prop = access(doc.value, item)
+    index_prop = esc(index_prop)
+    acc.push(index_prop)
+    return acc
+  }
 
-  return {
-    key: 'ÿiÿ' + index.join(',') + 'ÿ' + val.join('ÿ') + 'ÿ' + maybeKey + 'ÿ',
+  var val = r.reduce(reduceKey, [], index)
+
+  var index_doc = {
+    key: 'ÿiÿ' + index.join(',') + 'ÿ' + val.join('ÿ') + 'ÿ' + doc.key + 'ÿ',
     value: doc.key,
     type: 'put'
   }
+  console.log('INDEX DOC ->'.bgRed,colorize(JSON.stringify(index_doc.key,null,2)))
+  return index_doc
 }
 
 
 function makeRange (query, level_opts) {
+  // Avoid having to write queries with redundant array notation
   if (!Array.isArray(query.k)) { query.k = [ query.k ] }
   if (!Array.isArray(query.v)) { query.v = [ query.v ] }
 
+  // Gathers values in query value field, generating gte - lte
   function reduceV (acc, item) {
+    // Avoid having to write queries with redundant array notation
     if (!Array.isArray(item)) { item = [ item ] }
+    // Push bottom of range (first array element) into gte
     acc.gte.push(esc(item[0]))
+    // If it is not a range, use same value for lte, if it is use top of range
     acc.lte.push(esc(item.length > 1 ? item[1] : item[0]))
 
     return acc
@@ -165,14 +194,19 @@ function makeRange (query, level_opts) {
 
   var acc = r.reduce(reduceV, { gte: [], lte: [] }, query.v)
 
+  // Eliminate null values
   var compact = r.filter(r.identity)
   var lte = compact(acc.lte)
   var gte = compact(acc.gte)
 
   var range = {
+    // ÿiÿ identifies an index doc
+    // esc(query.k.join(',')) makes an identifier for the index
+    // gte/lte.join('ÿ') joins the ranges with the delimiter
     gte: 'ÿiÿ' + esc(query.k.join(',')) + 'ÿ' + gte.join('ÿ') + 'ÿ',
     lte: 'ÿiÿ' + esc(query.k.join(',')) + 'ÿ' + lte.join('ÿ') + 'ÿÿ'
   }
-
+  console.log('RANGE LTE ->'.bgBlue,colorize(JSON.stringify(range.lte,null,2)))
+  console.log('RANGE GTE ->'.bgBlue,colorize(JSON.stringify(range.gte,null,2)))
   return r.mixin(level_opts || {}, range)
 }

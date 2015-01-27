@@ -14,8 +14,7 @@ var db = level('./test1.db', { valueEncoding: 'json' })
 
 var indexes = [
   'content.score',
-  ['content.score', 'timestamp'],
-  ['content.score', '$latest'],
+  ['content.score', 'timestamp']
 ]
 
 var settings = {
@@ -101,19 +100,13 @@ test('\n\n.write(settings)', function (t) {
       timestamp: '29304857'
     }
   }, {
-    key: 'ÿiÿcontent.score,$latestÿ4ÿÿ',
-    value: 'dlnqoq003'
-  }, {
-    key: 'ÿiÿcontent.score,$latestÿ5ÿÿ',
-    value: '39djdjj31'
-  }, {
-    key: 'ÿiÿcontent.score,timestampÿ4ÿ29304857ÿw32fwfw33ÿ',
+    key: 'ÿiÿcontent.score,timestampÿ4ÿ"29304857"ÿw32fwfw33ÿ',
     value: 'w32fwfw33'
   }, {
-    key: 'ÿiÿcontent.score,timestampÿ4ÿ29304990ÿdlnqoq003ÿ',
+    key: 'ÿiÿcontent.score,timestampÿ4ÿ"29304990"ÿdlnqoq003ÿ',
     value: 'dlnqoq003'
   }, {
-    key: 'ÿiÿcontent.score,timestampÿ5ÿ29304932ÿ39djdjj31ÿ',
+    key: 'ÿiÿcontent.score,timestampÿ5ÿ"29304932"ÿ39djdjj31ÿ',
     value: '39djdjj31'
   }, {
     key: 'ÿiÿcontent.scoreÿ4ÿdlnqoq003ÿ',
@@ -164,19 +157,41 @@ test('\n\n.read(settings, query)', function (t) {
     )
   }
 
-  // This should retrieve the latest documents with a score of 4 or 5
+  // This should retrieve all documents with a score of 4 or 5
   var queryB = {
-    k: ['content.score', '$latest'],
+    k: ['content.score'],
     v: [['4', '5']] // content.score value range
   }
 
   var resultB = [{
     key: 'dlnqoq003',
-    value: {'timestamp':'29304990','content':{'name':'jeff','score':4}}
+    value: {
+      content: {
+        name: 'jeff',
+        score: 4
+      },
+      timestamp: '29304990'
+    }
+  }, {
+    key: 'w32fwfw33',
+    value: {
+      content: {
+        name: 'richard',
+        score: 4
+      },
+      timestamp: '29304857'
+    }
   }, {
     key: '39djdjj31',
-    value: {'timestamp':'29304932','content':{'name':'mary','score':5}}
+    value: {
+      content: {
+        name: 'mary',
+        score: 5
+      },
+      timestamp: '29304932'
+    }
   }]
+
 
   check(queryB, resultB, 'B')
 
@@ -214,7 +229,7 @@ test('\n\n.read(settings, query)', function (t) {
 
 
   // This should retrieve all documents with a score of 4 and a timestamp >
-  // 29304950
+  // '29304950'
   var queryE = {
     k: ['content.score', 'timestamp'],
     v: ['4', ['29304950', null]]
@@ -229,7 +244,7 @@ test('\n\n.read(settings, query)', function (t) {
 
 
   // This should retrieve all documents with a score of 4 and a timestamp <
-  // 29304950
+  // '29304950'
   var queryF = {
     k: ['content.score', 'timestamp'],
     v: ['4', [null, '29304950']]
@@ -269,10 +284,11 @@ test('\n\n.readOne(settings, query, callback)', function (t) {
     })
   }
 
-  // This should retrieve the latest documents with a score of 4 or 5
+  // This should retrieve the first document in the range of scores 4 - 5
   var queryA = {
-    k: ['content.score', '$latest'],
-    v: [['4', '5']] // content.score value range
+    k: ['content.score'],
+    v: [['4', '5']], // content.score value range
+    peek: 'first'
   }
 
   var resultA = {
@@ -301,11 +317,7 @@ test('\n\n.addIndexDocs(indexes)', function (t) {
     type: 'put',
     value: 'w32fwfw33'
   }, {
-    key: 'ÿiÿcontent.score,timestampÿ4ÿ29304857ÿw32fwfw33ÿ',
-    type: 'put',
-    value: 'w32fwfw33'
-  }, {
-    key: 'ÿiÿcontent.score,$latestÿ4ÿÿ',
+    key: 'ÿiÿcontent.score,timestampÿ4ÿ"29304857"ÿw32fwfw33ÿ',
     type: 'put',
     value: 'w32fwfw33'
   }, {
@@ -325,7 +337,6 @@ test('\n\n.addIndexDocs(indexes)', function (t) {
     pull.values([doc]),
     llibrarian.addIndexDocs(indexes), // <-- Here's how you do it
     pull.collect(function(err, arr) {
-      console.log(JSON.stringify(arr))
       t.deepEqual(arr, expected)
       t.end()
     })
@@ -379,7 +390,6 @@ test('\n\n.resolveIndexDocs(db)', function (t) {
     pull.values(docs),
     llibrarian.resolveIndexDocs(db), // <-- Here's how you do it
     pull.collect(function(err, arr) {
-      console.log(JSON.stringify(arr))
       t.deepEqual(arr, expected)
       t.end()
     })
