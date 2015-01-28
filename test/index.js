@@ -126,7 +126,7 @@ test('\n\n.read(settings, query)', function (t) {
   // This should retrieve all documents with a score of 4
   var queryA = {
     k: ['content.score'],
-    v: '4'
+    v: 4
   }
 
   var resultA = [{
@@ -160,7 +160,7 @@ test('\n\n.read(settings, query)', function (t) {
   // This should retrieve all documents with a score of 4 or 5
   var queryB = {
     k: ['content.score'],
-    v: [['4', '5']] // content.score value range
+    v: [[4, 5]] // content.score value range
   }
 
   var resultB = [{
@@ -199,7 +199,7 @@ test('\n\n.read(settings, query)', function (t) {
   // timestamp between '29304857' and '29304923'
   var queryC = {
     k: ['content.score', 'timestamp'],
-    v: ['4', ['29304857', '29304923']] // timestamp value range
+    v: [4, ['29304857', '29304923']] // timestamp value range
   }
 
   var resultC = [{
@@ -214,7 +214,7 @@ test('\n\n.read(settings, query)', function (t) {
   // example, since we left the timestamp off)
   var queryD = {
     k: ['content.score', 'timestamp'],
-    v: '4', // Timestamp value left off
+    v: 4, // Timestamp value left off
   }
 
   var resultD = [{
@@ -232,7 +232,7 @@ test('\n\n.read(settings, query)', function (t) {
   // '29304950'
   var queryE = {
     k: ['content.score', 'timestamp'],
-    v: ['4', ['29304950', null]]
+    v: [4, ['29304950', null]]
   }
 
   var resultE = [{
@@ -247,7 +247,7 @@ test('\n\n.read(settings, query)', function (t) {
   // '29304950'
   var queryF = {
     k: ['content.score', 'timestamp'],
-    v: ['4', [null, '29304950']]
+    v: [4, [null, '29304950']]
   }
 
   var resultF = [{
@@ -261,7 +261,7 @@ test('\n\n.read(settings, query)', function (t) {
   // timestamp
   var queryG = {
     k: ['content.score', 'timestamp'],
-    v: '4', // Timestamp value left off
+    v: 4, // Timestamp value left off
     peek: 'last'
   }
 
@@ -287,7 +287,7 @@ test('\n\n.readOne(settings, query, callback)', function (t) {
   // This should retrieve the first document in the range of scores 4 - 5
   var queryA = {
     k: ['content.score'],
-    v: [['4', '5']], // content.score value range
+    v: [[4, 5]], // content.score value range
     peek: 'first'
   }
 
