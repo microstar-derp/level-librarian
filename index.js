@@ -138,7 +138,7 @@ function makeIndexDoc (doc, index) {
   if (!Array.isArray(index)) { index = [ index ] }
 
   function reduceKey (acc, keypath) {
-    var index_prop = esc(access(doc.value, keypath))
+    var  index_prop = esc(access(doc.value, keypath))
     acc.push(index_prop)
     return acc
   }

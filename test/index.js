@@ -1,5 +1,4 @@
 // TODO
-// test with duplicate indexes
 // test with indexes as object
 
 'use strict';
@@ -14,7 +13,8 @@ var db = level('./test1.db', { valueEncoding: 'json' })
 
 var indexes = [
   'content.score',
-  ['content.score', 'timestamp']
+  ['content.score', 'timestamp'],
+  'content'
 ]
 
 var settings = {
@@ -117,11 +117,20 @@ test('\n\n.write(settings)', function (t) {
   }, {
     key: 'ÿiÿcontent.scoreÿ5ÿ39djdjj31ÿ',
     value: '39djdjj31'
+  }, {
+    key: 'ÿiÿcontentÿ{"name":"jeff","score":4}ÿdlnqoq003ÿ',
+    value: 'dlnqoq003'
+  }, {
+    key: 'ÿiÿcontentÿ{"name":"mary","score":5}ÿ39djdjj31ÿ',
+    value: '39djdjj31'
+  }, {
+    key: 'ÿiÿcontentÿ{"name":"richard","score":4}ÿw32fwfw33ÿ',
+    value: 'w32fwfw33'
   }]
 })
 
 test('\n\n.read(settings, query)', function (t) {
-  t.plan(13)
+  t.plan(15)
 
   // This should retrieve all documents with a score of 4
   var queryA = {
@@ -271,6 +280,16 @@ test('\n\n.read(settings, query)', function (t) {
   }]
 
   check(queryG, resultG, 'G')
+
+  // This should retrieve the document with the corresponding content prop
+  var queryH = {
+    k: 'content',
+    v: { score: 4, name: 'richard' }
+  }
+
+  var resultH = [ { key: 'w32fwfw33', value: { content: { name: 'richard', score: 4 }, timestamp: '29304857' } } ]
+
+  check(queryH, resultH, 'H')
 })
 
 
@@ -321,6 +340,10 @@ test('\n\n.addIndexDocs(indexes)', function (t) {
     type: 'put',
     value: 'w32fwfw33'
   }, {
+    key: 'ÿiÿcontentÿ{"name":"richard","score":4}ÿw32fwfw33ÿ',
+    type: 'put',
+    value: 'w32fwfw33'
+  }, {
     key: 'w32fwfw33',
     type: 'put',
     value: {
@@ -331,6 +354,7 @@ test('\n\n.addIndexDocs(indexes)', function (t) {
       timestamp: '29304857'
     }
   }]
+
 
 
   pull(
