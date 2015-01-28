@@ -7,7 +7,6 @@ var r = require('ramda')
 var peek = require('level-peek')
 var stringify = require('stable-stringify')
 var tc = require('type-check').typeCheck;
-require('colors')
 
 module.exports = {
   read: read,
@@ -29,26 +28,8 @@ module.exports = {
 //   level_opts: JSON
 // }
 
-function colorize (string) {
-  var arr = string.split('')
-  var colors = [ 'blue', 'cyan', 'green', 'yellow', 'red', 'magenta' ]
-  var color
-  var output = []
-  arr.forEach(function (char) {
-    if (char === 'ÿ') {
-      color = colors.pop()
-      colors.unshift(color)
-      output.push('::'.grey)
-    } else {
-      output.push(char[color])
-    }
-  })
-  output.pop()
-  output = output.join('')
-  return output
-}
-
 function esc (value) {
+  // Don't stringify null false etc
   if (value) {
     return stringify(value).replace('ÿ', '&&xff')
   }
@@ -157,8 +138,7 @@ function makeIndexDoc (doc, index) {
   if (!Array.isArray(index)) { index = [ index ] }
 
   function reduceKey (acc, keypath) {
-    var index_prop = access(doc.value, keypath)
-    index_prop = esc(index_prop)
+    var index_prop = esc(access(doc.value, keypath))
     acc.push(index_prop)
     return acc
   }
@@ -170,7 +150,7 @@ function makeIndexDoc (doc, index) {
     value: doc.key,
     type: 'put'
   }
-  console.log('INDEX DOC ->'.bgRed,colorize(JSON.stringify(index_doc.key,null,2)))
+
   return index_doc
 }
 
@@ -206,7 +186,6 @@ function makeRange (query, level_opts) {
     gte: 'ÿiÿ' + query.k.join(',') + 'ÿ' + gte.join('ÿ') + 'ÿ',
     lte: 'ÿiÿ' + query.k.join(',') + 'ÿ' + lte.join('ÿ') + 'ÿÿ'
   }
-  console.log('RANGE LTE ->'.bgBlue,colorize(JSON.stringify(range.lte,null,2)))
-  console.log('RANGE GTE ->'.bgBlue,colorize(JSON.stringify(range.gte,null,2)))
+
   return r.mixin(level_opts || {}, range)
 }
