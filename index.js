@@ -3,7 +3,9 @@
 var access = require('safe-access')
 var pull = require('pull-stream')
 var pl = require('pull-level')
-var r = require('ramda')
+var merge = require('lodash/object/merge')
+var compact = require('lodash/array/compact')
+var reduce = require('lodash/collection/reduce')
 var peek = require('level-peek')
 var stringify = require('stable-stringify')
 var tc = require('type-check').typeCheck;
@@ -53,8 +55,7 @@ function read (settings, query) {
         )
       )
     })
-  }
-  else {
+  } else {
     deferred.resolve(
       pull(
         pl.read(settings.db, range),
@@ -143,7 +144,7 @@ function makeIndexDoc (doc, index) {
     return acc
   }
 
-  var val = r.reduce(reduceKey, [], index)
+  var val = reduce(index, reduceKey, [])
 
   var index_doc = {
     key: 'ÿiÿ' + index.join(',') + 'ÿ' + val.join('ÿ') + 'ÿ' + doc.key + 'ÿ',
@@ -172,10 +173,9 @@ function makeRange (query, level_opts) {
     return acc
   }
 
-  var acc = r.reduce(reduceV, { gte: [], lte: [] }, query.v)
+  var acc = reduce(query.v, reduceV, { gte: [], lte: [] })
 
   // Eliminate null values
-  var compact = r.filter(r.identity)
   var lte = compact(acc.lte)
   var gte = compact(acc.gte)
 
@@ -187,5 +187,7 @@ function makeRange (query, level_opts) {
     lte: 'ÿiÿ' + query.k.join(',') + 'ÿ' + lte.join('ÿ') + 'ÿÿ'
   }
 
-  return r.mixin(level_opts || {}, range)
+  range = merge(level_opts || {}, range)
+
+  return range
 }

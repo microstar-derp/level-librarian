@@ -27,10 +27,9 @@
   },
   "dependencies": {
     "level-peek": "^2.0.0",
-    "lodash": "^2.4.1",
+    "lodash": "^3.0.0",
     "pull-level": "^1.2.0",
     "pull-stream": "^2.26.0",
-    "ramda": "^0.8.0",
     "safe-access": "^0.1.0",
     "type-check": "^0.3.1"
   }
