@@ -187,6 +187,8 @@ function makeRange (query, level_opts) {
     lte: 'ÿiÿ' + query.k.join(',') + 'ÿ' + lte.join('ÿ') + 'ÿÿ'
   }
 
+  if (query.reverse) { range.reverse = true }
+
   range = merge(level_opts || {}, range)
 
   return range

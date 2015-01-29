@@ -130,7 +130,7 @@ test('\n\n.write(settings)', function (t) {
 })
 
 test('\n\n.read(settings, query)', function (t) {
-  t.plan(15)
+  t.plan(9)
 
   // This should retrieve all documents with a score of 4
   var queryA = {
@@ -159,7 +159,7 @@ test('\n\n.read(settings, query)', function (t) {
     pull(
       llibrarian.read(settings, query),
       pull.collect(function(err, arr) {
-        t.error(err)
+        if (err) { throw err }
         console.log(string, JSON.stringify(arr))
         t.deepEqual(arr, result, string)
       })
@@ -290,6 +290,44 @@ test('\n\n.read(settings, query)', function (t) {
   var resultH = [ { key: 'w32fwfw33', value: { content: { name: 'richard', score: 4 }, timestamp: '29304857' } } ]
 
   check(queryH, resultH, 'H')
+
+  // This should retrieve all documents with a score of 4 or 5- in reverse
+  var queryI = {
+    k: ['content.score'],
+    v: [[4, 5]], // content.score value range
+    reverse: true
+  }
+
+  var resultI = [{
+    key: '39djdjj31',
+    value: {
+      content: {
+        name: 'mary',
+        score: 5
+      },
+      timestamp: '29304932'
+    }
+  }, {
+    key: 'w32fwfw33',
+    value: {
+      content: {
+        name: 'richard',
+        score: 4
+      },
+      timestamp: '29304857'
+    }
+  }, {
+    key: 'dlnqoq003',
+    value: {
+      content: {
+        name: 'jeff',
+        score: 4
+      },
+      timestamp: '29304990'
+    }
+  }]
+
+  check(queryI, resultI, 'I')
 })
 
 
