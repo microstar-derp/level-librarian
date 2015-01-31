@@ -48,9 +48,11 @@ function read (settings, query) {
 
   if (query.peek) {
     peek[query.peek](settings.db, range, function (err, key, value) {
+      if (err) { throw err }
       deferred.resolve(
         pull(
-          pull.values([{ key: key, value: value }]),
+          // If document exists, put into stream, if not, send empty stream
+          key ? pull.values([{ key: key, value: value }]) : pull.empty(),
           resolveIndexDocs(settings.db)
         )
       )
