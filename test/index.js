@@ -4,11 +4,11 @@
 'use strict';
 
 var test = require('tape')
-var level = require('level-test')()
 var llibrarian = require('../index.js')
 var pull = require('pull-stream')
 var pl = require('pull-level')
 
+var level = require('level-test')()
 var db = level('./test1.db', { valueEncoding: 'json' })
 
 var indexes = [
