@@ -26,7 +26,7 @@ module.exports = {
 
 // settings = {
 //   db: JS,
-//   indexes: JSON,
+//   index_defs: JSON,
 //   level_opts: JSON
 // }
 
@@ -37,16 +37,18 @@ function esc (value) {
   }
 }
 
-
+// Returns a source stream containing all the documents selected by a query
 function read (settings, query) {
   if(!tc('{ createIfMissing: Boolean, ... }', settings.db.options)) {
     throw new Error('settings.db is not supposed to be ' + settings.db)
   }
 
+  // Make a range from the query
   var range = makeRange(query, settings.level_opts)
   var deferred = pull.defer()
 
   if (query.peek) {
+    // Use level-peek to get first or last
     peek[query.peek](settings.db, range, function (err, key, value) {
       if (err) { throw err }
       deferred.resolve(
@@ -69,6 +71,8 @@ function read (settings, query) {
   return deferred
 }
 
+// Takes a function returning a source stream and returns a function readOne
+// which reads one item from a stream and returns it with a callback syntax.
 function makeReadOne (read) {
   return function readOne (settings, query, callback) {
     pull(
@@ -80,17 +84,21 @@ function makeReadOne (read) {
   }
 }
 
+// Returns a sink stream writing the documents passed in as well as their
+// corresponding index_defs.
 function write (settings, callback) {
   if(!tc('{ createIfMissing: Boolean, ... }', settings.db.options)) {
     throw new Error('settings.db is not supposed to be ' + settings.db)
   }
 
   return pull(
-    addIndexDocs(settings.indexes),
+    addIndexDocs(settings.index_defs),
     pl.write(settings.db, settings.level_opts, callback)
   )
 }
 
+// Takes a function returning a sink stream and returns a function writeOne
+// which takes a document and writes it to the stream
 function makeWriteOne (write) {
   return function writeOne (settings, doc, callback) {
     pull(
@@ -100,7 +108,8 @@ function makeWriteOne (write) {
   }
 }
 
-
+// Returns a through stream which takes index documents and resolves them to
+// actual documents
 function resolveIndexDocs (db) {
   return pull.asyncMap(function (data, callback) {
     db.get(data.value, function (err, value) {
@@ -109,10 +118,19 @@ function resolveIndexDocs (db) {
   })
 }
 
-function addIndexDocs (indexes) {
+// Returns a through stream which injects index docs corresponding to each doc
+// in the input stream
+function addIndexDocs (index_defs) {
+  if (!tc('[String|[String]]', index_defs)) {
+    throw new Error('index_defs is not supposed to be ' + index_defs)
+  }
+
   return pull(
     pull.map(function (doc) {
-      var batch = makeIndexDocs({ key: doc.key, value: doc.value }, indexes)
+      var batch = Object.keys(index_defs).map(function (key) {
+        return makeIndexDoc(doc, index_defs[key])
+      })
+
       doc.type = 'put'
       batch.push(doc)
       return batch
@@ -121,35 +139,23 @@ function addIndexDocs (indexes) {
   )
 }
 
-function makeIndexDocs (doc, indexes) {
-  if (!tc('[String|[String]]', indexes)) {
-    throw new Error('indexes is not supposed to be ' + indexes)
-  }
+// Returns an index document generated from doc and index_def
+function makeIndexDoc (doc, index_def) {
+  if (!Array.isArray(index_def)) { index_def = [ index_def ] }
 
-  var batch = []
-
-  // Generate an index doc for each index
-  Object.keys(indexes).forEach(function (key) {
-    batch.push(makeIndexDoc(doc, indexes[key]))
-  })
-
-  return batch
-}
-
-
-function makeIndexDoc (doc, index) {
-  if (!Array.isArray(index)) { index = [ index ] }
-
-  function reduceKey (acc, keypath) {
-    var  index_prop = esc(access(doc.value, keypath))
+  // Assemble index key from index definition
+  var index_key = index_def.reduce(function (acc, keypath) {
+    var index_prop = esc(access(doc.value, keypath))
     acc.push(index_prop)
     return acc
-  }
-
-  var val = reduce(index, reduceKey, [])
+  }, [])
 
   var index_doc = {
-    key: 'ÿiÿ' + index.join(',') + 'ÿ' + val.join('ÿ') + 'ÿ' + doc.key + 'ÿ',
+    // ÿiÿ identifies an index doc
+    // esc(query.k.join(',')) makes an identifier for the index
+    // index_key.join('ÿ') joins the index key with the delimiter
+    // doc.key is added to ensure uniqueness
+    key: 'ÿiÿ' + index_def.join(',') + 'ÿ' + index_key.join('ÿ') + 'ÿ' + doc.key + 'ÿ',
     value: doc.key,
     type: 'put'
   }
@@ -157,14 +163,14 @@ function makeIndexDoc (doc, index) {
   return index_doc
 }
 
-
+// Generate a range that retreives the documents requested by the query
 function makeRange (query, level_opts) {
   // Avoid having to write queries with redundant array notation
   if (!Array.isArray(query.k)) { query.k = [ query.k ] }
   if (!Array.isArray(query.v)) { query.v = [ query.v ] }
 
   // Gathers values in query value field, generating gte - lte
-  function reduceV (acc, item) {
+  var acc = query.v.reduce(function (acc, item) {
     // Avoid having to write queries with redundant array notation
     if (!Array.isArray(item)) { item = [ item ] }
     // Push bottom of range (first array element) into gte
@@ -173,9 +179,7 @@ function makeRange (query, level_opts) {
     acc.lte.push(esc(item.length > 1 ? item[1] : item[0]))
 
     return acc
-  }
-
-  var acc = reduce(query.v, reduceV, { gte: [], lte: [] })
+  }, { gte: [], lte: [] })
 
   // Eliminate null values
   var lte = compact(acc.lte)
