@@ -110,7 +110,7 @@ A `document` is an object with a `key` and a `value` property. The value will be
 
 ## API
 
-### .write(setttings, callback)
+### .write(settings, callback)
 
 Arguments:
 
