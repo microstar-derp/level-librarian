@@ -119,6 +119,15 @@ Arguments:
 
 This method returns a pull-stream sink that accepts a stream of documents and writes them to the db, also saving index documents based on the `index_defs` passed in the settings object.
 
+```js
+pull(
+  pull.values(messages),
+  llibrarian.write(settings, function () {
+    console.log('done!')
+  })
+)
+```
+
 ### .read(settings, query)
 
 Arguments:
@@ -128,6 +137,15 @@ Arguments:
 
 This method reads from the leveldb based on the query passed. It returns a pull-stream source outputting a stream of `documents` that match the query. See above for more on querying.
 
+```js
+pull(
+  llibrarian.read(settings, { k: ['content.score', 'content.name'], v: [5, ['b', 'y']] }),
+  pull.collect(function (err, arr) {
+    console.log(arr)
+  })
+)
+```
+
 ### .addIndexDocs(index_defs)
 
 Arguments:
@@ -135,6 +153,16 @@ Arguments:
 - `index_defs`: Array of index definitions.
 
 Returns a through stream which injects index documents corresponding to each document in the input stream.
+
+```js
+pull(
+  pull.values(messages),
+  addIndexDocs(settings.index_defs),
+  pull.collect(function (err, arr) {
+    console.log(arr)
+  })
+)
+```
 
 ### .makeIndexDoc(doc, index_def)
 
@@ -145,8 +173,29 @@ Arguments:
 
 Returns an index document generated from doc and index_def.
 
+```js
+var doc =   {
+  key: 'IB5y8S',
+  value: {
+    timestamp: 1422732928131,
+    content: { score: 5, name: 'zed' }
+  }
+}
+
+var index_def = ['content.score', 'content.name']
+
+var index_doc = makeIndexDoc(doc, index_def)
+// TODO
+```
+
 ### .makeReadOne()
 
 Arguments:
 
-- ``
+- `read`: Read function.
+
+This function takes a function with the same signature as `.read()`, and returns a function that reads a single item and calls back.
+
+```js
+
+```

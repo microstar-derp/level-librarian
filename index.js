@@ -18,7 +18,6 @@ module.exports = {
   makeWriteOne: makeWriteOne,
   resolveIndexDocs: resolveIndexDocs,
   addIndexDocs: addIndexDocs,
-  makeIndexDocs: makeIndexDocs,
   makeIndexDoc: makeIndexDoc,
   makeRange: makeRange
 }
