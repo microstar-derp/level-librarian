@@ -5,7 +5,6 @@ var pull = require('pull-stream')
 var pl = require('pull-level')
 var merge = require('lodash/object/merge')
 var compact = require('lodash/array/compact')
-var reduce = require('lodash/collection/reduce')
 var peek = require('level-peek')
 var stringify = require('stable-stringify')
 var tc = require('type-check').typeCheck;
