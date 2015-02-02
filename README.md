@@ -1,6 +1,6 @@
 # level-librarian
 
-This module provides an interface to query a leveldb using a simple query language no more complicated than it needs to be. Basic operation involves writing documents to the db using an array of index definitions to generate index documents. These index definitions consist of an array of keypaths that reference properties in the document. These keypaths are then used to generate index documents which are used to find the document on read.
+This module provides an interface to query a leveldb using a simple query language no more complicated that it needs to be. Basic operation involves writing documents to the db using an array of index definitions to generate index documents. These index definitions consist of an array of keypaths that reference properties in the document. These keypaths are then used to generate index documents which are used to find the document on read.
 
 For example:
 
@@ -28,7 +28,7 @@ Index documents Generated:
 1422732866728
 
 ```
-level-librarian scans through the index documents according to a query to find the right document or range of documents. As is usual in leveldb, the scan is alphabetical.
+level-librarian scans through the index documents according to a query to find the right document or range of documents. As is usual in levedb, the scan is alphabetical.
 
 ```js
 {
@@ -192,10 +192,50 @@ var index_doc = makeIndexDoc(doc, index_def)
 
 Arguments:
 
-- `read`: Read function.
+- `read`: Function taking a query and returning a source stream.
 
-This function takes a function with the same signature as `.read()`, and returns a function that reads a single item and calls back.
+This takes a function with the same signature as `.read()`, and returns a function that reads a single item and calls back.
 
 ```js
+var readOne = makeReadOne(read)
 
+var query = {
+  k: ['content.score', 'content.name'],
+  v: 4
+}
+
+readOne(query, function (err, doc) {
+  console.log(JSON.stringify(doc))
+})
 ```
+
+### .makeWriteOne()
+
+Arguments:
+
+- `write`: Function returning a sink stream that writes to the DB.
+
+This takes a function with the same signature as `.write()` and returns a function that writes one object to the db and calls back.
+
+```js
+var writeOne = makeWriteOne(write)
+
+var doc = {
+  key: 'zm35bT',
+  value: {
+    timestamp: 1422732852573,
+    content: { score: 5, name: 'ann' }
+  }
+}
+
+writeOne(doc, function (err) {
+  console.log('done!')
+})
+```
+
+### .resolveIndexDocs(db)
+
+Arguments:
+
+- `db`: A leveldb.
+
