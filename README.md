@@ -1,6 +1,6 @@
 # level-librarian
 
-This module provides an interface to query a leveldb using a simple query language no more complicated that it needs to be. Basic operation involves writing documents to the db using an array of index definitions to generate index documents. These index definitions consist of an array of keypaths that reference properties in the document. These keypaths are then used to generate index documents which are used to find the document on read.
+This module provides an interface to query a leveldb using a simple query language no more complicated than it needs to be. Basic operation involves writing documents to the db using an array of index definitions to generate index documents. These index definitions consist of an array of keypaths that reference properties in the document. These keypaths are then used to generate index documents which are used to find the document on read.
 
 For example:
 
@@ -28,7 +28,7 @@ Index documents Generated:
 1422732866728
 
 ```
-level-librarian scans through the index documents according to a query to find the right document or range of documents. As is usual in levedb, the scan is alphabetical.
+level-librarian scans through the index documents according to a query to find the right document or range of documents. As is usual in leveldb, the scan is alphabetical.
 
 ```js
 {
