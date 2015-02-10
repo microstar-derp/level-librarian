@@ -1,11 +1,20 @@
 # level-librarian
 
-This module provides an interface to query a leveldb using a simple query language no more complicated that it needs to be. Basic operation involves writing documents to the db using an array of index definitions to generate index documents. These index definitions consist of an array of keypaths that reference properties in the document. These keypaths are then used to generate index documents which are used to find the document on read.
+This module provides an interface to query a leveldb using a simple query language- **LLCJ**. Basic operation involves writing documents to the db using an array of index definitions to generate index documents. These index definitions consist of an array of keypaths that reference properties in the document. These keypaths are then used to generate index documents which are used to find the document on read.
 
-For example:
+## LLCJ
+
+### Documents
+
+A document is an object with `key` and `value` properties. The `value` is stored under the `key` in leveldb.
+
+### Index definitions
+
+Index definitions consist of an array of keypaths referencing properties of the primary document's `value`. These keypaths are used to generate index documents. These index documents have a key containing the values found at the index definition's keypath, and a value containing the key of the primary document. Leveldb can then do an alphabetical scan through the index documents and resolve them to primary documents.
+
+Example primary document:
 
 ```js
-Document:
 {
   key: 'w32fwfw33',
   value: {
@@ -16,70 +25,71 @@ Document:
     }
   }
 }
-
-Index Definitions:
-[
-  ['content.score', 'content.name'],
-  'timestamp'
-]
-
-Index documents Generated:
-4::richard
-1422732866728
-
 ```
+
+Example index definition:
+
+```js
+['content.score', 'content.name']
+```
+
+Index document generated:
+
+```js
+{
+  key: 4::richard, // (greatly simplified)
+  value: 'w32fwfw33'
+}
+```
+
+
 level-librarian scans through the index documents according to a query to find the right document or range of documents. As is usual in levedb, the scan is alphabetical.
+
+### Queries:
+
+LLCJ queries consist of an object containing a `k` property, a `v` property, and some other optional properties. The `k` property contains the index definition to be used. Indexes must exist in the db before being queried. The `v` property specifies an alphabetical range to return.
+
+Examples:
+
+```js
+{
+  k: ['content.score', 'content.name'],
+  v: [5, 'richard']
+}
+```
+**^** This gets all documents with a `content.score` of `5` and a `content.name` of `'richard'`.
+
+```js
+{
+  k: ['content.score', 'content.name'],
+  v: [5, 'richard']
+}
+```
+**^** This gets all documents with a `content.score` of `5` and a `content.name` of `'bob'`.
 
 ```js
 {
   k: ['content.score', 'content.name'],
   v: [5, ['b', 'y']]
 }
+```
+**^** This gets all documents with a `content.score` of `5` and a `content.name` between `'b'` and `'y'`.
 
-4::adam
-4::richard
-5::ann
-------------
-5::bob      | Documents selected
-5::mary     |
-------------
-5::zed
-6::heinrich
-7::josh
-
-
+```js
 {
   k: ['content.score', 'content.name'],
   v: 4
 }
+```
+**^** This gets all documents with a `content.score` of `4`. Results are ordered by `content.name`.
 
-------------
-4::adam     | Documents selected
-4::richard  |
-------------
-5::ann
-5::bob
-5::mary
-5::zed
-6::heinrich
-7::josh
-
+```js
 {
   k: 'timestamp',
   v: [1422732800000, 1422732900000]
 }
-
-1422732779407
-1422732795438
----------------
-1422732852573  | Documents selected
-1422732866728  |
----------------
-1422732902893
-1422732928131
-1422732928886
-1422732961057
 ```
+**^** This gets all documents with a timestamp between `1422732800000` and `1422732900000`.
 
 ## Glossary
 
@@ -238,4 +248,6 @@ writeOne(doc, function (err) {
 Arguments:
 
 - `db`: A leveldb.
+
+This returns a through stream that takes a stream of index documents and resolves them to the primary documents in the db.
 
