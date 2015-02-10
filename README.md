@@ -2,11 +2,7 @@
 
 This module provides an interface to query a leveldb using a simple query language- **LLCJ**. Basic operation involves writing documents to the db using an array of index definitions to generate index documents. These index definitions consist of an array of keypaths that reference properties in the document. These keypaths are then used to generate index documents which are used to find the document on read.
 
-## LLCJ
-
-### Documents
-
-A document is an object with `key` and `value` properties. The `value` is stored under the `key` in leveldb.
+## LLCJ Query Language
 
 ### Index definitions
 
