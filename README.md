@@ -245,5 +245,14 @@ Arguments:
 
 - `db`: A leveldb.
 
-This returns a through stream that takes a stream of index documents and resolves them to the primary documents in the db.
+This returns a through stream that takes a stream of index documents and resolves them to the primary documents in the db. This is the guts of `.read()`.
 
+```js
+pull(
+  pl.read(settings.db, range),
+  resolveIndexDocs(settings.db),
+  pull.collect(function (err, arr) {
+    console.log(arr)
+  })
+)
+```
