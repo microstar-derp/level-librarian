@@ -1,5 +1,5 @@
 // TODO
-// test with indexes as object
+// test with index_defs as object
 
 'use strict';
 
@@ -11,14 +11,14 @@ var pl = require('pull-level')
 var level = require('level-test')()
 var db = level('./test1.db', { valueEncoding: 'json' })
 
-var indexes = [
+var index_defs = [
   'content.score',
   ['content.score', 'timestamp'],
   'content'
 ]
 
 var settings = {
-  indexes: indexes,
+  index_defs: index_defs,
   db: db
 }
 
@@ -51,7 +51,15 @@ test('\n\n.write(settings)', function (t) {
         score: 4
       }
     }
-  }]
+  }, {
+    key: 'dfsdfs222',
+    value: {
+    timestamp: '29305000',
+    content: {
+      name: 'franklin',
+      score: 0
+    }
+  }}]
 
   pull(
     pull.values(docs),
@@ -82,6 +90,15 @@ test('\n\n.write(settings)', function (t) {
       timestamp: '29304932'
     }
   }, {
+    key: 'dfsdfs222',
+    value: {
+      content: {
+        name: 'franklin',
+        score: 0
+      },
+      timestamp: '29305000'
+    }
+  }, {
     key: 'dlnqoq003',
     value: {
       content: {
@@ -100,6 +117,9 @@ test('\n\n.write(settings)', function (t) {
       timestamp: '29304857'
     }
   }, {
+    key: 'ÿiÿcontent.score,timestampÿ0ÿ"29305000"ÿdfsdfs222ÿ',
+    value: 'dfsdfs222'
+  }, {
     key: 'ÿiÿcontent.score,timestampÿ4ÿ"29304857"ÿw32fwfw33ÿ',
     value: 'w32fwfw33'
   }, {
@@ -109,6 +129,9 @@ test('\n\n.write(settings)', function (t) {
     key: 'ÿiÿcontent.score,timestampÿ5ÿ"29304932"ÿ39djdjj31ÿ',
     value: '39djdjj31'
   }, {
+    key: 'ÿiÿcontent.scoreÿ0ÿdfsdfs222ÿ',
+    value: 'dfsdfs222'
+  }, {
     key: 'ÿiÿcontent.scoreÿ4ÿdlnqoq003ÿ',
     value: 'dlnqoq003'
   }, {
@@ -117,6 +140,9 @@ test('\n\n.write(settings)', function (t) {
   }, {
     key: 'ÿiÿcontent.scoreÿ5ÿ39djdjj31ÿ',
     value: '39djdjj31'
+  }, {
+    key: 'ÿiÿcontentÿ{"name":"franklin","score":0}ÿdfsdfs222ÿ',
+    value: 'dfsdfs222'
   }, {
     key: 'ÿiÿcontentÿ{"name":"jeff","score":4}ÿdlnqoq003ÿ',
     value: 'dlnqoq003'
@@ -291,7 +317,7 @@ test('\n\n.read(settings, query)', function (t) {
 
   check(queryH, resultH, 'H')
 
-  // This should retrieve all documents with a score of 4 or 5- in reverse
+  // This should retrieve all documents with a score of 4 or 5 in reverse
   var queryI = {
     k: ['content.score'],
     v: [[4, 5]], // content.score value range
@@ -357,7 +383,7 @@ test('\n\n.readOne(settings, query, callback)', function (t) {
 })
 
 
-test('\n\n.addIndexDocs(indexes)', function (t) {
+test('\n\n.addIndexDocs(index_defs)', function (t) {
   var doc = {
     key: 'w32fwfw33',
     value: {
@@ -397,7 +423,7 @@ test('\n\n.addIndexDocs(indexes)', function (t) {
 
   pull(
     pull.values([doc]),
-    llibrarian.addIndexDocs(indexes), // <-- Here's how you do it
+    llibrarian.addIndexDocs(index_defs), // <-- Here's how you do it
     pull.collect(function(err, arr) {
       t.deepEqual(arr, expected)
       t.end()
