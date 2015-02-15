@@ -8,6 +8,12 @@ This module provides an interface to query a leveldb using a simple query langua
 
 Index definitions consist of an array of keypaths referencing properties of the primary document's `value`. These keypaths are used to generate index documents. These index documents have a key containing the values found at the index definition's keypath, and a value containing the key of the primary document. Leveldb can then do an alphabetical scan through the index documents and resolve them to primary documents.
 
+Example index definition:
+
+```js
+['content.score', 'content.name']
+```
+
 Example primary document:
 
 ```js
@@ -23,12 +29,6 @@ Example primary document:
 }
 ```
 
-Example index definition:
-
-```js
-['content.score', 'content.name']
-```
-
 Index document generated:
 
 ```js
@@ -37,7 +37,6 @@ Index document generated:
   value: 'w32fwfw33'
 }
 ```
-
 
 level-librarian scans through the index documents according to a query to find the right document or range of documents. As is usual in levedb, the scan is alphabetical.
 

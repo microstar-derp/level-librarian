@@ -21,9 +21,10 @@
   "author": "jehan.tremback@gmail.com",
   "license": "MIT",
   "devDependencies": {
-    "tape": "^3.0.3",
     "level": "^0.18.0",
-    "rimraf": "^2.2.8"
+    "rimraf": "^2.2.8",
+    "tap-difflet": "^0.3.0",
+    "tape": "^3.0.3"
   },
   "dependencies": {
     "level-peek": "^2.0.0",
