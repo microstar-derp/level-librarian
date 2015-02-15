@@ -30,9 +30,9 @@ module.exports = {
 
 function esc (value) {
   // Don't stringify null false etc
-  if (value) {
+  // if (value) {
     return stringify(value).replace('ÿ', '&&xff')
-  }
+  // }
 }
 
 // Returns a source stream containing all the documents selected by a query
