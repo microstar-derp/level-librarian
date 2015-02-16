@@ -57,7 +57,7 @@ Examples:
 ```js
 {
   k: ['content.score', 'content.name'],
-  v: [5, 'richard']
+  v: [5, 'bob']
 }
 ```
 **^** This gets all documents with a `content.score` of `5` and a `content.name` of `'bob'`.
