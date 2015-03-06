@@ -22,16 +22,20 @@
   "license": "MIT",
   "devDependencies": {
     "level": "^0.18.0",
+    "level-test": "^1.7.0",
     "rimraf": "^2.2.8",
     "tap-difflet": "^0.3.0",
-    "tape": "^3.0.3"
+    "tape": "^3.0.3",
+    "get-trace": "^1.0.0"
   },
   "dependencies": {
+    "bytewise": "^0.7.1",
     "level-peek": "^2.0.0",
     "lodash": "^3.0.0",
     "pull-level": "^1.2.0",
     "pull-stream": "^2.26.0",
     "safe-access": "^0.1.0",
+    "stable-stringify": "^1.0.0",
     "type-check": "^0.3.1"
   }
 }

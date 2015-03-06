@@ -8,6 +8,7 @@ var compact = require('lodash/array/compact')
 var peek = require('level-peek')
 var stringify = require('stable-stringify')
 var tc = require('type-check').typeCheck;
+var bytewise = require('bytewise');
 
 module.exports = {
   read: read,
@@ -29,10 +30,12 @@ module.exports = {
 // }
 
 function esc (value) {
-  // Don't stringify null false etc
-  // if (value) {
-    return stringify(value).replace('ÿ', '&&xff')
-  // }
+  // Don't stringify null or undefined
+  if (value === null || value === undefined) {
+    return value
+  } else {
+    return stringify(value)
+  }
 }
 
 // Returns a source stream containing all the documents selected by a query
@@ -149,11 +152,7 @@ function makeIndexDoc (doc, index_def) {
   }, [])
 
   var index_doc = {
-    // ÿiÿ identifies an index doc
-    // esc(query.k.join(',')) makes an identifier for the index
-    // index_key.join('ÿ') joins the index key with the delimiter
-    // doc.key is added to ensure uniqueness
-    key: 'ÿiÿ' + index_def.join(',') + 'ÿ' + index_key.join('ÿ') + 'ÿ' + doc.key + 'ÿ',
+    key: bytewise.encode(['i', index_def.join(',')].concat(index_key).concat([doc.key])),
     value: doc.key,
     type: 'put'
   }
@@ -184,11 +183,8 @@ function makeRange (query, level_opts) {
   var gte = compact(acc.gte)
 
   var range = {
-    // ÿiÿ identifies an index doc
-    // esc(query.k.join(',')) makes an identifier for the index
-    // gte/lte.join('ÿ') joins the ranges with the delimiter
-    gte: 'ÿiÿ' + query.k.join(',') + 'ÿ' + gte.join('ÿ') + 'ÿ',
-    lte: 'ÿiÿ' + query.k.join(',') + 'ÿ' + lte.join('ÿ') + 'ÿÿ'
+    gte: bytewise.encode(['i', query.k.join(',')].concat(gte).concat([null])),
+    lte: bytewise.encode(['i', query.k.join(',')].concat(lte).concat([undefined]))
   }
 
   if (query.reverse) { range.reverse = true }

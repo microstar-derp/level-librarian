@@ -6,10 +6,31 @@
 var test = require('tape')
 var llibrarian = require('../index.js')
 var pull = require('pull-stream')
-var pl = require('pull-level')
 
 var level = require('level-test')()
 var db = level('./test1.db', { valueEncoding: 'json' })
+var trace = require('get-trace')
+
+function tracify (t) {
+  function attach (func) {
+    return function () {
+      var args = []
+      for (var i = 0; i < arguments.length; i++) {
+        args.push(arguments[i])
+      }
+      args.push(trace(2))
+
+      return func.apply(null, args)
+    }
+  }
+  return {
+    equal: attach(t.equal),
+    deepEqual: attach(t.deepEqual),
+    error: attach(t.error),
+    end: t.end,
+    plan: t.plan
+  }
+}
 
 var index_defs = [
   'content.score',
@@ -24,6 +45,8 @@ var settings = {
 
 
 test('\n\n.write(settings)', function (t) {
+  t = tracify(t)
+
   var docs = [{
     key: 'w32fwfw33',
     value: {
@@ -65,97 +88,13 @@ test('\n\n.write(settings)', function (t) {
     pull.values(docs),
     llibrarian.write(settings, function (err) {
       t.error(err)
-      checkDB()
+      t.end()
     })
   )
-
-  function checkDB () {
-    pull(
-      pl.read(db),
-      pull.collect(function (err, arr) {
-        t.error(err)
-        t.deepEqual(arr, db_contents)
-        t.end()
-      })
-    )
-  }
-
-  var db_contents = [{
-    key: '39djdjj31',
-    value: {
-      content: {
-        name: 'mary',
-        score: 5
-      },
-      timestamp: '29304932'
-    }
-  }, {
-    key: 'dfsdfs222',
-    value: {
-      content: {
-        name: 'franklin',
-        score: 0
-      },
-      timestamp: '29305000'
-    }
-  }, {
-    key: 'dlnqoq003',
-    value: {
-      content: {
-        name: 'jeff',
-        score: 4
-      },
-      timestamp: '29304990'
-    }
-  }, {
-    key: 'w32fwfw33',
-    value: {
-      content: {
-        name: 'richard',
-        score: 4
-      },
-      timestamp: '29304857'
-    }
-  }, {
-    key: 'ÿiÿcontent.score,timestampÿ0ÿ"29305000"ÿdfsdfs222ÿ',
-    value: 'dfsdfs222'
-  }, {
-    key: 'ÿiÿcontent.score,timestampÿ4ÿ"29304857"ÿw32fwfw33ÿ',
-    value: 'w32fwfw33'
-  }, {
-    key: 'ÿiÿcontent.score,timestampÿ4ÿ"29304990"ÿdlnqoq003ÿ',
-    value: 'dlnqoq003'
-  }, {
-    key: 'ÿiÿcontent.score,timestampÿ5ÿ"29304932"ÿ39djdjj31ÿ',
-    value: '39djdjj31'
-  }, {
-    key: 'ÿiÿcontent.scoreÿ0ÿdfsdfs222ÿ',
-    value: 'dfsdfs222'
-  }, {
-    key: 'ÿiÿcontent.scoreÿ4ÿdlnqoq003ÿ',
-    value: 'dlnqoq003'
-  }, {
-    key: 'ÿiÿcontent.scoreÿ4ÿw32fwfw33ÿ',
-    value: 'w32fwfw33'
-  }, {
-    key: 'ÿiÿcontent.scoreÿ5ÿ39djdjj31ÿ',
-    value: '39djdjj31'
-  }, {
-    key: 'ÿiÿcontentÿ{"name":"franklin","score":0}ÿdfsdfs222ÿ',
-    value: 'dfsdfs222'
-  }, {
-    key: 'ÿiÿcontentÿ{"name":"jeff","score":4}ÿdlnqoq003ÿ',
-    value: 'dlnqoq003'
-  }, {
-    key: 'ÿiÿcontentÿ{"name":"mary","score":5}ÿ39djdjj31ÿ',
-    value: '39djdjj31'
-  }, {
-    key: 'ÿiÿcontentÿ{"name":"richard","score":4}ÿw32fwfw33ÿ',
-    value: 'w32fwfw33'
-  }]
 })
 
 test('\n\n.read(settings, query)', function (t) {
+  t = tracify(t)
   t.plan(9)
 
   // This should retrieve all documents with a score of 4
@@ -175,8 +114,8 @@ test('\n\n.read(settings, query)', function (t) {
   pull(
     llibrarian.read(settings, queryA),
     pull.collect(function(err, arr) {
-      console.log('A', JSON.stringify(arr))
-      t.deepEqual(arr, resultA, 'A')
+      console.log(JSON.stringify(arr))
+      t.deepEqual(arr, resultA)
     })
   )
 
@@ -186,7 +125,7 @@ test('\n\n.read(settings, query)', function (t) {
       llibrarian.read(settings, query),
       pull.collect(function(err, arr) {
         if (err) { throw err }
-        console.log(string, JSON.stringify(arr))
+        console.log(JSON.stringify(arr))
         t.deepEqual(arr, result, string)
       })
     )
@@ -228,7 +167,7 @@ test('\n\n.read(settings, query)', function (t) {
   }]
 
 
-  check(queryB, resultB, 'B')
+  check(queryB, resultB, trace(1))
 
   // This should retrieve all documents with a content.score of 4 with a
   // timestamp between '29304857' and '29304923'
@@ -242,7 +181,7 @@ test('\n\n.read(settings, query)', function (t) {
     value: {'timestamp':'29304857','content':{'name':'richard','score':4}}
   }]
 
-  check(queryC, resultC, 'C')
+  check(queryC, resultC, trace(1))
 
 
   // This should retrieve all documents with a score of 4 (just like the first
@@ -260,7 +199,7 @@ test('\n\n.read(settings, query)', function (t) {
     value: {'timestamp':'29304990','content':{'name':'jeff','score':4}}
   }]
 
-  check(queryD, resultD, 'D')
+  check(queryD, resultD, trace(1))
 
 
   // This should retrieve all documents with a score of 4 and a timestamp >
@@ -275,7 +214,7 @@ test('\n\n.read(settings, query)', function (t) {
     value: {'timestamp':'29304990','content':{'name':'jeff','score':4}}
   }]
 
-  check(queryE, resultE, 'E')
+  check(queryE, resultE, trace(1))
 
 
   // This should retrieve all documents with a score of 4 and a timestamp <
@@ -290,7 +229,7 @@ test('\n\n.read(settings, query)', function (t) {
     value: {'timestamp':'29304857','content':{'name':'richard','score':4}}
   }]
 
-  check(queryF, resultF, 'F')
+  check(queryF, resultF, trace(1))
 
   // This should retrieve the last document with a score of 4, ordered by
   // timestamp
@@ -305,7 +244,7 @@ test('\n\n.read(settings, query)', function (t) {
     value: {'timestamp':'29304990','content':{'name':'jeff','score':4}}
   }]
 
-  check(queryG, resultG, 'G')
+  check(queryG, resultG, trace(1))
 
   // This should retrieve the document with the corresponding content prop
   var queryH = {
@@ -315,7 +254,7 @@ test('\n\n.read(settings, query)', function (t) {
 
   var resultH = [ { key: 'w32fwfw33', value: { content: { name: 'richard', score: 4 }, timestamp: '29304857' } } ]
 
-  check(queryH, resultH, 'H')
+  check(queryH, resultH, trace(1))
 
   // This should retrieve all documents with a score of 4 or 5 in reverse
   var queryI = {
@@ -353,16 +292,18 @@ test('\n\n.read(settings, query)', function (t) {
     }
   }]
 
-  check(queryI, resultI, 'I')
+  check(queryI, resultI, trace(1))
 })
 
 
 test('\n\n.readOne(settings, query, callback)', function (t) {
+  t = tracify(t)
+
   function check (query, result, string) {
     llibrarian.readOne(settings, query, function (err, item) {
       t.error(err)
       console.log(string, JSON.stringify(item))
-      t.deepEqual(item, result, string)
+      t.deepEqual(item, result)
       t.end()
     })
   }
@@ -380,106 +321,4 @@ test('\n\n.readOne(settings, query, callback)', function (t) {
   }
 
   check(queryA, resultA, 'A')
-})
-
-
-test('\n\n.addIndexDocs(index_defs)', function (t) {
-  var doc = {
-    key: 'w32fwfw33',
-    value: {
-      timestamp: '29304857',
-      content: {
-        name: 'richard',
-        score: 4
-      }
-    }
-  }
-
-  var expected = [{
-    key: 'ÿiÿcontent.scoreÿ4ÿw32fwfw33ÿ',
-    type: 'put',
-    value: 'w32fwfw33'
-  }, {
-    key: 'ÿiÿcontent.score,timestampÿ4ÿ"29304857"ÿw32fwfw33ÿ',
-    type: 'put',
-    value: 'w32fwfw33'
-  }, {
-    key: 'ÿiÿcontentÿ{"name":"richard","score":4}ÿw32fwfw33ÿ',
-    type: 'put',
-    value: 'w32fwfw33'
-  }, {
-    key: 'w32fwfw33',
-    type: 'put',
-    value: {
-      content: {
-        name: 'richard',
-        score: 4
-      },
-      timestamp: '29304857'
-    }
-  }]
-
-
-
-  pull(
-    pull.values([doc]),
-    llibrarian.addIndexDocs(index_defs), // <-- Here's how you do it
-    pull.collect(function(err, arr) {
-      t.deepEqual(arr, expected)
-      t.end()
-    })
-  )
-
-})
-
-
-test('\n\n.resolveIndexDocs(db)', function (t) {
-  var docs = [{
-    key: 'ÿcontent.scoreÿ4ÿdlnqoq003ÿ',
-    value: 'dlnqoq003'
-  }, {
-    key: 'ÿcontent.scoreÿ4ÿw32fwfw33ÿ',
-    value: 'w32fwfw33'
-  }, {
-    key: 'ÿcontent.scoreÿ5ÿ39djdjj31ÿ',
-    value: '39djdjj31'
-  }]
-
-  var expected = [{
-    key: 'dlnqoq003',
-    value: {
-      timestamp: '29304990',
-      content: {
-        name: 'jeff',
-        score: 4
-      }
-    }
-  }, {
-    key: 'w32fwfw33',
-    value: {
-      timestamp: '29304857',
-      content: {
-        name: 'richard',
-        score: 4
-      }
-    }
-  }, {
-    key: '39djdjj31',
-    value: {
-      timestamp: '29304932',
-      content: {
-        name: 'mary',
-        score: 5
-      }
-    }
-  }]
-
-  pull(
-    pull.values(docs),
-    llibrarian.resolveIndexDocs(db), // <-- Here's how you do it
-    pull.collect(function(err, arr) {
-      t.deepEqual(arr, expected)
-      t.end()
-    })
-  )
 })
